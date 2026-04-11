@@ -51,4 +51,24 @@ class WeatherData {
       timestamp: "N/A",
     );
   }
+
+  WeatherData copyWith({
+    double? temperature,
+    double? humidity,
+    double? soilMoisture,
+    double? precipitation,
+    double? rain,
+    double? cloudCover,
+    String? timestamp,
+  }) {
+    return WeatherData(
+      temperature: temperature ?? this.temperature,
+      humidity: humidity ?? this.humidity,
+      soilMoisture: soilMoisture ?? this.soilMoisture,
+      precipitation: precipitation ?? this.precipitation,
+      rain: rain ?? this.rain,
+      cloudCover: cloudCover ?? this.cloudCover,
+      timestamp: timestamp ?? this.timestamp,
+    );
+  }
 }

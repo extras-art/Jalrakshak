@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../models/dashboard_data.dart';
+import '../services/scribe_service.dart';
+import '../services/oracle_service.dart';
+import '../models/weather_data.dart';
 
 class ReportScreen extends StatelessWidget {
   final DashboardData data;
@@ -24,6 +27,8 @@ class ReportScreen extends StatelessWidget {
                   _buildFormalHeader(),
                   const SizedBox(height: 32),
                   _buildRiskSummaryCard(),
+                  const SizedBox(height: 24),
+                  _buildStructuredMissionManifest(),
                   const SizedBox(height: 24),
                   _buildAnalyticalNarrative(),
                   const SizedBox(height: 24),
@@ -140,6 +145,57 @@ class ReportScreen extends StatelessWidget {
         ],
       ),
     ).animate().scale();
+  }
+
+  Widget _buildStructuredMissionManifest() {
+    // Generate prediction for the report
+    final mockWeather = WeatherData.empty().copyWith(precipitation: data.rainfall, soilMoisture: data.soilSaturation);
+    final prediction = OracleService.predict(mockWeather);
+    
+    final manifest = ScribeService.generateReport(
+      location: data.location,
+      riskLevel: data.riskLevel,
+      reason: data.reasoning,
+      prediction: prediction.forecastMessage,
+      action: data.actionInstruction,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFF1E293B)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.description_outlined, color: Color(0xFF0EA5E9), size: 18),
+              const SizedBox(width: 8),
+              Text('MISSION MANIFEST (SCRIBE)', style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF0EA5E9))),
+              const Spacer(),
+              _buildMeridianTag(),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            manifest,
+            style: GoogleFonts.sourceCodePro(fontSize: 12, color: const Color(0xFF94A3B8), height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMeridianTag() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4), border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.2))),
+      child: Text('[MERIDIAN OPTIMIZED]', style: GoogleFonts.orbitron(fontSize: 7, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
+    );
   }
 
   Widget _buildAnalyticalNarrative() {

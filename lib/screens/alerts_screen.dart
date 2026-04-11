@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'dart:async';
 import '../models/alert_model.dart';
 import '../models/dashboard_data.dart';
+import '../models/weather_data.dart';
+import '../services/oracle_service.dart';
+import '../services/probe_service.dart';
 import 'risk_map_screen.dart';
 
 class AlertsScreen extends StatefulWidget {
@@ -14,52 +19,80 @@ class AlertsScreen extends StatefulWidget {
 }
 
 class _AlertsScreenState extends State<AlertsScreen> {
-  final List<AlertModel> _alerts = [
-    AlertModel(
-      id: '1',
-      title: 'CRITICAL FLOOD BREACH',
-      area: 'Sion East',
-      predictionTime: 'Next 45 min',
-      severity: RiskLevel.critical,
-      reason: 'Drainage output capacity exceeded by 240%. High-tide surge synchronization detected by Sentinel 4.',
-      confidence: 0.94,
-      status: AlertStatus.active,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
-    ),
-    AlertModel(
-      id: '2',
-      title: 'Inundation Warning',
-      area: 'Kurla West',
-      predictionTime: 'Next 2 hours',
-      severity: RiskLevel.high,
-      reason: 'Mithi River channel narrow point showing depth acceleration. Soil saturation at 92%.',
-      confidence: 0.87,
-      status: AlertStatus.active,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
-    ),
-    AlertModel(
-      id: '3',
-      title: 'Water Accumulation',
-      area: 'Andheri East',
-      predictionTime: 'Next 4 hours',
-      severity: RiskLevel.medium,
-      reason: 'Localized rainfall intensity increasing. Potential transit corridor disruption near WEH.',
-      confidence: 0.72,
-      status: AlertStatus.monitoring,
-      timestamp: DateTime.now().subtract(const Duration(hours: 1)),
-    ),
-    AlertModel(
-      id: '4',
-      title: 'Baseline Monitoring',
-      area: 'Dharavi',
-      predictionTime: 'Next 6 hours',
-      severity: RiskLevel.low,
-      reason: 'Precipitation within channel clearance margins. All drainage pumps functional.',
-      confidence: 0.99,
-      status: AlertStatus.resolved,
-      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-    ),
-  ];
+  List<AlertModel> _alerts = [];
+  StreamSubscription? _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _startAlertStream();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+  void _startAlertStream() {
+    _subscription = FirebaseDatabase.instance.ref('telemetry/latest').onValue.listen((event) {
+      final data = event.snapshot.value;
+      if (data != null && data is Map) {
+        final List<AlertModel> newAlerts = [];
+        data.forEach((key, val) {
+          final weather = WeatherData.fromJson({'hourly': _convertToHourlyFormat(val)});
+          final risk = ProbeService.calculateRisk(weather);
+          
+          if (risk != RiskLevel.low) {
+            final prediction = OracleService.predict(weather);
+            final name = key.toString().replaceAll('_', ' ');
+            
+            newAlerts.add(AlertModel(
+              id: key.toString(),
+              title: _getAlertTitle(risk),
+              area: name,
+              predictionTime: '${prediction.timeToCritical} min',
+              severity: prediction.futureRisk,
+              reason: prediction.forecastMessage,
+              confidence: 0.85 + (weather.rain / 500), // Dynamic confidence
+              status: AlertStatus.active,
+              timestamp: DateTime.now(),
+            ));
+          }
+        });
+
+        if (mounted) {
+          setState(() {
+            _alerts = newAlerts;
+            // Sort by severity
+            _alerts.sort((a, b) => b.severity.index.compareTo(a.severity.index));
+          });
+        }
+      }
+    });
+  }
+
+  Map<String, dynamic> _convertToHourlyFormat(dynamic val) {
+    // Background service stores flat values, we wrap them for WeatherData.fromJson
+    return {
+      'time': [DateTime.now().toIso8601String()],
+      'temperature_2m': [val['temp'] ?? 0],
+      'relativehumidity_2m': [val['humidity'] ?? 0],
+      'soil_moisture_0_to_1cm': [val['soil'] ?? 0],
+      'precipitation': [val['rain'] ?? 0],
+      'rain': [val['rain'] ?? 0],
+      'cloudcover': [val['cloud'] ?? 0],
+    };
+  }
+
+  String _getAlertTitle(RiskLevel risk) {
+    switch (risk) {
+      case RiskLevel.critical: return 'CRITICAL BREACH DETECTED';
+      case RiskLevel.high: return 'High Elevation Warning';
+      case RiskLevel.medium: return 'Monitoring Alert';
+      default: return 'Environmental Pulse';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

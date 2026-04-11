@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../services/firebase_service.dart';
 
 class CitizenReportScreen extends StatefulWidget {
   final bool isTab;
@@ -39,14 +40,23 @@ class _CitizenReportScreenState extends State<CitizenReportScreen> {
     }
   }
 
-  void _submitReport() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Report submitted to Veritas Intelligence Hub!'),
-        backgroundColor: Color(0xFF10B981),
-      ),
+  void _submitReport() async {
+    final service = FirebaseService();
+    await service.submitReport(
+      _selectedLocation ?? 'Unknown',
+      'Water Logging (Manual)',
+      _descriptionController.text,
     );
-    Navigator.pop(context);
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Report submitted to Veritas Intelligence Hub!'),
+          backgroundColor: Color(0xFF10B981),
+        ),
+      );
+      Navigator.pop(context);
+    }
   }
 
   @override

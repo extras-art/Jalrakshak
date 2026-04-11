@@ -1,7 +1,16 @@
+import 'dart:async';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../models/dashboard_data.dart';
+import '../data/location_data.dart';
+import '../models/location_node.dart';
+import '../models/weather_data.dart';
+import '../services/priority_service.dart';
+import '../services/probe_service.dart';
 
 class RiskMapScreen extends StatefulWidget {
   final DashboardData initialData;
@@ -13,80 +22,68 @@ class RiskMapScreen extends StatefulWidget {
 }
 
 class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateMixin {
-  late DashboardData _currentData;
-  int _simulationIndex = 0;
   String? _selectedDistrict;
-
-  // Mock list of scenarios for simulation sync (Simplified copy of Dashboard scenarios)
-  // In a real app, this would be passed or managed by a service.
-  late List<DashboardData> _scenarios;
+  final MapController _mapController = MapController();
+  
+  // Real-time risk data cache for markers
+  final Map<String, RiskLevel> _liveRisks = {};
+  List<TacticalPriority> _topRisks = [];
+  StreamSubscription? _allTelemetrySubscription;
 
   @override
   void initState() {
     super.initState();
-    _currentData = widget.initialData;
-    _scenarios = [
-      _currentData, // Scenario 0: Baseline
-      _currentData.copyWithLocation(_currentData.location)..copyWithRisk(RiskLevel.medium), 
-      _currentData.copyWithLocation(_currentData.location)..copyWithRisk(RiskLevel.critical), 
-    ];
-    // Mocking the scenario data for map demonstration
-    _setupMockScenarios();
+    _startGlobalRiskStream();
   }
 
-  void _setupMockScenarios() {
-    // We override the sectors risk levels to show map changes
-    _scenarios = [
-      DashboardData(
-        location: 'Mumbai Central',
-        rainfall: 2.0, temperature: 28, humidity: 65, waterLevel: 0.12,
-        aiConfidence: 0.98, soilSaturation: 0.35, aqi: 42,
-        riskLevel: RiskLevel.low,
-        reasoning: "Nominal conditions across the peninsula.",
-        actionInstruction: "Routine surveillance active.",
-        historicalRainfall: [1, 2, 1, 2, 1, 2],
-        sectors: [
-          SectorRisk('Sion', RiskLevel.low),
-          SectorRisk('Kurla', RiskLevel.low),
-          SectorRisk('Andheri', RiskLevel.low),
-        ],
-      ),
-      DashboardData(
-        location: 'Mumbai Central',
-        rainfall: 15.0, temperature: 26, humidity: 85, waterLevel: 0.45,
-        aiConfidence: 0.88, soilSaturation: 0.70, aqi: 88,
-        riskLevel: RiskLevel.medium,
-        reasoning: "Satellite detected cloud accumulation over North Mumbai.",
-        actionInstruction: "Yellow Alert: Monitoring low-lying transit hubs.",
-        historicalRainfall: [2, 5, 8, 12, 14, 15],
-        sectors: [
-          SectorRisk('Sion', RiskLevel.medium),
-          SectorRisk('Kurla', RiskLevel.medium),
-          SectorRisk('Andheri', RiskLevel.low),
-        ],
-      ),
-      DashboardData(
-        location: 'Mumbai Central',
-        rainfall: 42.0, temperature: 23, humidity: 95, waterLevel: 0.85,
-        aiConfidence: 0.92, soilSaturation: 0.98, aqi: 125,
-        riskLevel: RiskLevel.critical,
-        reasoning: "CRITICAL PRECIPITATION: Mithi River at bank-full capacity.",
-        actionInstruction: "RED ALERT: Immediate evacuation of Kurla-Sion corridor.",
-        historicalRainfall: [15, 20, 28, 35, 40, 42],
-        sectors: [
-          SectorRisk('Sion', RiskLevel.critical),
-          SectorRisk('Kurla', RiskLevel.critical),
-          SectorRisk('Andheri', RiskLevel.high),
-        ],
-      ),
-    ];
-    _currentData = _scenarios[0];
+  @override
+  void dispose() {
+    _allTelemetrySubscription?.cancel();
+    _mapController.dispose();
+    super.dispose();
   }
 
-  void _nextSimulation() {
-    setState(() {
-      _simulationIndex = (_simulationIndex + 1) % _scenarios.length;
-      _currentData = _scenarios[_simulationIndex];
+  void _showTacticalJumpMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _TacticalJumpSheet(
+        onSelect: (node) {
+          setState(() => _selectedDistrict = node.name);
+          _mapController.move(LatLng(node.latitude, node.longitude), 14.0);
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  /// Listens to the entire telemetry tree to update markers in real-time
+  void _startGlobalRiskStream() {
+    _allTelemetrySubscription = FirebaseDatabase.instance
+        .ref('telemetry/latest')
+        .onValue
+        .listen((event) {
+      final data = event.snapshot.value;
+      if (data != null && data is Map && mounted) {
+        setState(() {
+          _topRisks = PriorityService.rankTopRisks(data.cast<String, dynamic>());
+          data.forEach((loc, telemetry) {
+            final name = loc.toString().replaceAll('_', ' ');
+            final weather = WeatherData.fromJson({'hourly': {
+              'time': [DateTime.now().toIso8601String()],
+              'temperature_2m': [telemetry['temperature'] ?? 0],
+              'relativehumidity_2m': [telemetry['humidity'] ?? 0],
+              'soil_moisture_0_to_1cm': [telemetry['soil_moisture'] ?? 0],
+              'precipitation': [telemetry['precipitation'] ?? 0],
+              'rain': [telemetry['rain'] ?? 0],
+              'cloudcover': [telemetry['cloud_cover'] ?? 0],
+            }});
+            
+            _liveRisks[name] = ProbeService.calculateRisk(weather);
+          });
+        });
+      }
     });
   }
 
@@ -96,18 +93,46 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
       backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [
-          // 1. Vector Map Layer
+          // 1. High-Fidelity Map Layer
           Positioned.fill(
-            child: _MumbaiMapLayer(
-              data: _currentData,
-              selectedDistrict: _selectedDistrict,
-              onDistrictTap: (district) {
-                setState(() => _selectedDistrict = district);
-              },
+            child: FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: const LatLng(19.0760, 72.8777), // Mumbai Center
+                initialZoom: 12.0,
+                maxZoom: 18.0,
+                minZoom: 10.0,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.planetshield360',
+                ),
+                MarkerLayer(
+                  markers: locations.map((node) {
+                    final risk = _liveRisks[node.name] ?? RiskLevel.low;
+                    final isPriority = _topRisks.any((p) => p.location == node.name);
+                    return Marker(
+                      point: LatLng(node.latitude, node.longitude),
+                      width: 80,
+                      height: 80,
+                      child: _HotspotMarker(
+                        name: node.name,
+                        level: risk,
+                        isSelected: _selectedDistrict == node.name,
+                        isPriority: isPriority,
+                        onTap: () {
+                          setState(() => _selectedDistrict = node.name);
+                          _mapController.move(LatLng(node.latitude, node.longitude), 14.0);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
             ),
           ),
 
-          // 2. Clear Header
           Positioned(
             top: 60, left: 24, right: 24,
             child: _buildHeader(),
@@ -164,6 +189,15 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
                   letterSpacing: 1.2,
                 ),
               ),
+              const SizedBox(width: 12),
+              const VerticalDivider(width: 1, indent: 4, endIndent: 4, color: Color(0xFFE2E8F0)),
+              const SizedBox(width: 12),
+              IconButton(
+                onPressed: _showTacticalJumpMenu,
+                icon: const Icon(Icons.search, color: Color(0xFF64748B), size: 18),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
             ],
           ),
         ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2),
@@ -172,15 +206,11 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
   }
 
   Widget _buildInfoCard() {
-    final sector = _selectedDistrict != null 
-        ? _currentData.sectors.firstWhere((s) => s.name == _selectedDistrict, orElse: () => _currentData.sectors[0])
-        : null;
-
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
-      child: sector == null 
+      child: _selectedDistrict == null 
           ? _buildDefaultHud()
-          : _buildDistrictDetailsHud(sector),
+          : _buildDistrictDetailsHud(_selectedDistrict!),
     );
   }
 
@@ -207,7 +237,7 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Tap any district hotspot to view deep hydrology telemetry and agent reasoning.',
+                  'Tap any tactical hotspot to pull localized telemetry and satellite analysis.',
                   style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF64748B)),
                 ),
               ],
@@ -218,8 +248,10 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
     );
   }
 
-  Widget _buildDistrictDetailsHud(SectorRisk s) {
-    final color = _getRiskLevelColor(s.level);
+  Widget _buildDistrictDetailsHud(String name) {
+    final risk = _liveRisks[name] ?? RiskLevel.low;
+    final color = _getRiskLevelColor(risk);
+    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -239,23 +271,21 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('DISTRICT PROFILE', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF94A3B8))),
-                  Text(s.name, style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                  Text(name, style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
                 ],
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                child: Text(s.level.name.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w900, color: color)),
+                child: Text(risk.name.toUpperCase(), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w900, color: color)),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          _buildDetailRow(Icons.water_drop, 'Rain Intensity', '${_currentData.rainfall} mm/hr'),
-          const SizedBox(height: 8),
-          _buildDetailRow(Icons.waves, 'Inundation Depth', '${(_currentData.waterLevel * 100).toInt()} cm'),
+          _buildDetailRow(Icons.location_on, 'Coordinates', '${locations.firstWhere((l) => l.name == name).latitude.toStringAsFixed(4)}, ${locations.firstWhere((l) => l.name == name).longitude.toStringAsFixed(4)}'),
           const SizedBox(height: 16),
           Text(
-            _currentData.reasoning,
+            'SENTINEL Analysis: Localized environmental sweep confirms tactical integrity. High-resolution sensors standing by for sector intervention.',
             style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF475569), height: 1.5),
           ),
           const SizedBox(height: 20),
@@ -302,11 +332,13 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
   Widget _buildFloatingControls() {
     return Column(
       children: [
-        _buildRoundBtn(Icons.bolt, 'SIM', onTab: _nextSimulation, isPrimary: true),
+        _buildRoundBtn(Icons.my_location, 'CENTER', onTab: () {
+          _mapController.move(const LatLng(19.0760, 72.8777), 12.0);
+        }, isPrimary: true),
         const SizedBox(height: 12),
-        _buildRoundBtn(Icons.layers, 'LAYERS'),
+        _buildRoundBtn(Icons.add, 'IN', onTab: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom + 1)),
         const SizedBox(height: 12),
-        _buildRoundBtn(Icons.my_location, 'RECENTER'),
+        _buildRoundBtn(Icons.remove, 'OUT', onTab: () => _mapController.move(_mapController.camera.center, _mapController.camera.zoom - 1)),
       ],
     );
   }
@@ -342,72 +374,18 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
   }
 }
 
-class _MumbaiMapLayer extends StatelessWidget {
-  final DashboardData data;
-  final String? selectedDistrict;
-  final Function(String) onDistrictTap;
-
-  const _MumbaiMapLayer({
-    required this.data,
-    required this.selectedDistrict,
-    required this.onDistrictTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final w = constraints.maxWidth;
-        final h = constraints.maxHeight;
-
-        return Stack(
-          children: [
-            // Base Painter
-            CustomPaint(
-              size: Size(w, h),
-              painter: _MumbaiMapPainter(),
-            ),
-
-            // Hotspots
-            ...data.sectors.map((s) {
-              final pos = _getDistrictPosition(s.name, w, h);
-              return _HotspotMarker(
-                name: s.name,
-                pos: pos,
-                level: s.level,
-                isSelected: selectedDistrict == s.name,
-                onTap: () => onDistrictTap(s.name),
-              );
-            }),
-          ],
-        );
-      },
-    );
-  }
-
-  Offset _getDistrictPosition(String name, double w, double h) {
-    // Relative coordinates for Mumbai peninsula
-    switch (name) {
-      case 'Sion': return Offset(w * 0.52, h * 0.62);
-      case 'Kurla': return Offset(w * 0.58, h * 0.55);
-      case 'Andheri': return Offset(w * 0.45, h * 0.45);
-      default: return Offset(w * 0.5, h * 0.5);
-    }
-  }
-}
-
 class _HotspotMarker extends StatefulWidget {
   final String name;
-  final Offset pos;
   final RiskLevel level;
   final bool isSelected;
+  final bool isPriority;
   final VoidCallback onTap;
 
   const _HotspotMarker({
     required this.name,
-    required this.pos,
     required this.level,
     required this.isSelected,
+    required this.isPriority,
     required this.onTap,
   });
 
@@ -435,63 +413,65 @@ class _HotspotMarkerState extends State<_HotspotMarker> with SingleTickerProvide
     final color = _getRiskColor(widget.level);
     final isCritical = widget.level == RiskLevel.critical || widget.level == RiskLevel.high;
 
-    return Positioned(
-      left: widget.pos.dx - 40,
-      top: widget.pos.dy - 40,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: SizedBox(
-          width: 80, height: 80,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Pulsing Layer
-              if (isCritical)
-                AnimatedBuilder(
-                  animation: _ctrl,
-                  builder: (context, _) {
-                    return Container(
-                      width: 20 + (60 * _ctrl.value),
-                      height: 20 + (60 * _ctrl.value),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.15 * (1 - _ctrl.value)),
-                        shape: BoxShape.circle,
-                      ),
-                    );
-                  },
-                ),
-
-              // Marker Disc
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: widget.isSelected ? 24 : 16,
-                height: widget.isSelected ? 24 : 16,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: color, width: 4),
-                  boxShadow: [BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 10, spreadRadius: 2)],
-                ),
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: SizedBox(
+        width: 80, height: 80,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Pulsing Layer
+            if (isCritical)
+              AnimatedBuilder(
+                animation: _ctrl,
+                builder: (context, _) {
+                  return Container(
+                    width: 20 + (60 * _ctrl.value),
+                    height: 20 + (60 * _ctrl.value),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.15 * (1 - _ctrl.value)),
+                      shape: BoxShape.circle,
+                    ),
+                  );
+                },
               ),
 
-              // Label (Visible if selected or high risk)
-              if (widget.isSelected || isCritical)
-                Positioned(
-                  top: 55,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A).withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      widget.name.toUpperCase(),
-                      style: GoogleFonts.orbitron(fontSize: 7, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                  ).animate().fadeIn(),
-                ),
-            ],
-          ),
+            // Marker Disc
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: widget.isSelected || widget.isPriority ? 24 : 16,
+              height: widget.isSelected || widget.isPriority ? 24 : 16,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: color, width: widget.isPriority ? 6 : 4),
+                boxShadow: [
+                  BoxShadow(color: color.withValues(alpha: 0.2), blurRadius: 10, spreadRadius: 2),
+                  if (widget.isPriority) BoxShadow(color: const Color(0xFFF59E0B).withValues(alpha: 0.3), blurRadius: 20, spreadRadius: 4),
+                ],
+              ),
+              child: widget.isPriority 
+                 ? const Icon(Icons.emergency, color: Color(0xFF991B1B), size: 12)
+                 : null,
+            ),
+
+            // Label
+            if (widget.isSelected || isCritical)
+              Positioned(
+                top: 55,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    widget.name.toUpperCase(),
+                    style: GoogleFonts.orbitron(fontSize: 7, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ).animate().fadeIn(),
+              ),
+          ],
         ),
       ),
     );
@@ -507,68 +487,80 @@ class _HotspotMarkerState extends State<_HotspotMarker> with SingleTickerProvide
   }
 }
 
-class _MumbaiMapPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFE2E8F0)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    final fillPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    final w = size.width;
-    final h = size.height;
-
-    // Simplified Mumbai Peninsula Path (Normalized)
-    path.moveTo(w * 0.5, h * 0.9); // Colaba
-    path.lineTo(w * 0.4, h * 0.85); // Worli
-    path.quadraticBezierTo(w * 0.35, h * 0.7, w * 0.38, h * 0.55); // Bandra
-    path.lineTo(w * 0.35, h * 0.4); // Andheri West
-    path.quadraticBezierTo(w * 0.4, h * 0.2, w * 0.5, h * 0.2); // North Boundary
-    path.lineTo(w * 0.6, h * 0.3); // Thane Creek Side
-    path.quadraticBezierTo(w * 0.55, h * 0.5, w * 0.6, h * 0.7); // Eastern Seaboard
-    path.close();
-
-    // Draw Drop Shadow for Depth
-    canvas.drawPath(path.shift(const Offset(4, 4)), Paint()..color = Colors.black.withValues(alpha: 0.02)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10));
-    
-    // Draw Landmass
-    canvas.drawPath(path, fillPaint);
-    canvas.drawPath(path, paint);
-
-    // Grid Lines (Mission Aesthetic)
-    final gridPaint = Paint()..color = const Color(0xFFE2E8F0).withValues(alpha: 0.5)..strokeWidth = 0.5;
-    for (var i = 1; i < 10; i++) {
-        canvas.drawLine(Offset(0, h * (i / 10)), Offset(w, h * (i / 10)), gridPaint);
-        canvas.drawLine(Offset(w * (i / 10), 0), Offset(w * (i / 10), h), gridPaint);
-    }
-  }
+class _TacticalJumpSheet extends StatefulWidget {
+  final Function(LocationNode) onSelect;
+  const _TacticalJumpSheet({required this.onSelect});
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  State<_TacticalJumpSheet> createState() => _TacticalJumpSheetState();
 }
 
-// Extension to DashboardData for copyWithRisk (used in simulation logic)
-extension on DashboardData {
-  DashboardData copyWithRisk(RiskLevel newLvl) {
-    return DashboardData(
-      location: location,
-      rainfall: rainfall,
-      temperature: temperature,
-      humidity: humidity,
-      waterLevel: waterLevel,
-      aiConfidence: aiConfidence,
-      soilSaturation: soilSaturation,
-      aqi: aqi,
-      riskLevel: newLvl,
-      reasoning: reasoning,
-      actionInstruction: actionInstruction,
-      historicalRainfall: historicalRainfall,
-      sectors: sectors.map((s) => SectorRisk(s.name, newLvl)).toList(),
+class _TacticalJumpSheetState extends State<_TacticalJumpSheet> {
+  String _search = '';
+  
+  @override
+  Widget build(BuildContext context) {
+    final filtered = locations.where((l) => l.name.toLowerCase().contains(_search.toLowerCase())).toList();
+    
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFFE2E8F0), borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Row(
+              children: [
+                const Icon(Icons.radar, color: Color(0xFF0EA5E9), size: 24),
+                const SizedBox(width: 16),
+                Text('STRATEGIC MISSION REGISTRY', style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: TextField(
+              onChanged: (v) => setState(() => _search = v),
+              decoration: InputDecoration(
+                hintText: 'Search 40 tactical sectors...',
+                hintStyle: GoogleFonts.poppins(color: const Color(0xFF94A3B8), fontSize: 14),
+                prefixIcon: const Icon(Icons.search, color: Color(0xFF94A3B8)),
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: filtered.length,
+              itemBuilder: (context, i) {
+                final node = filtered[i];
+                return ListTile(
+                  onTap: () => widget.onSelect(node),
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(color: const Color(0xFF0EA5E9).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.location_on, color: Color(0xFF0EA5E9), size: 18),
+                  ),
+                  title: Text(node.name, style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: const Color(0xFF1E293B))),
+                  subtitle: Text('Sector: ${node.latitude.toStringAsFixed(4)}, ${node.longitude.toStringAsFixed(4)}', style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF64748B))),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 12, color: Color(0xFFCBD5E1)),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

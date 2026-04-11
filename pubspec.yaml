@@ -44,6 +44,9 @@ dependencies:
   audioplayers: ^6.6.0
   fl_chart: ^0.70.2
   http: ^1.2.1
+  firebase_database: ^12.2.0
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:

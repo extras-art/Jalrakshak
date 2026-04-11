@@ -1,7 +1,8 @@
+import 'dart:async';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../services/weather_service.dart';
 import '../models/weather_data.dart';
 import '../models/location_node.dart';
 import '../data/location_data.dart';
@@ -15,59 +16,48 @@ class ApiDataScreen extends StatefulWidget {
 }
 
 class _ApiDataScreenState extends State<ApiDataScreen> {
-  final WeatherService _weatherService = WeatherService();
+  final DatabaseReference _telemetryRef = FirebaseDatabase.instance.ref('telemetry/latest');
+  StreamSubscription? _telemetrySubscription;
   final Map<String, WeatherData> _telemetryCache = {};
-  final List<String> _syncingNodes = [];
-  bool _isGlobalSyncing = false;
   String _searchQuery = "";
+  bool _isInitializing = true;
 
   @override
   void initState() {
     super.initState();
-    _syncAllSectors();
+    _startListening();
   }
 
-  Future<void> _syncAllSectors() async {
-    if (_isGlobalSyncing) return;
-    setState(() {
-      _isGlobalSyncing = true;
-      _telemetryCache.clear();
-    });
+  @override
+  void dispose() {
+    _telemetrySubscription?.cancel();
+    super.dispose();
+  }
 
-    // Staggered parallel fetching to avoid rate limits
-    const int batchSize = 5;
-    for (int i = 0; i < locations.length; i += batchSize) {
-      final batch = locations.skip(i).take(batchSize);
-      
-      setState(() {
-        _syncingNodes.addAll(batch.map((e) => e.name));
-      });
-
-      final results = await Future.wait(batch.map((node) async {
-        try {
-          final data = await _weatherService.fetchCurrentWeather(node.latitude, node.longitude);
-          return MapEntry(node.name, data);
-        } catch (e) {
-          return MapEntry(node.name, WeatherData.empty());
+  void _startListening() {
+    _telemetrySubscription = _telemetryRef.onValue.listen((event) {
+      final data = event.snapshot.value;
+      if (data != null && data is Map) {
+        if (mounted) {
+          setState(() {
+            data.forEach((key, value) {
+              if (value is Map) {
+                _telemetryCache[key.toString().replaceAll('_', ' ')] = WeatherData(
+                  temperature: (value['temperature'] ?? 0).toDouble(),
+                  humidity: (value['humidity'] ?? 0).toDouble(),
+                  soilMoisture: (value['soil_moisture'] ?? 0).toDouble(),
+                  precipitation: (value['precipitation'] ?? 0).toDouble(),
+                  rain: (value['rain'] ?? 0).toDouble(),
+                  cloudCover: (value['cloud_cover'] ?? 0).toDouble(),
+                  timestamp: value['timestamp'] ?? '',
+                );
+              }
+            });
+            _isInitializing = false;
+          });
         }
-      }));
-
-      if (mounted) {
-        setState(() {
-          for (var entry in results) {
-            _telemetryCache[entry.key] = entry.value;
-            _syncingNodes.remove(entry.key);
-          }
-        });
       }
-      
-      // Small breathing room between batches
-      await Future.delayed(const Duration(milliseconds: 200));
-    }
-
-    if (mounted) {
-      setState(() => _isGlobalSyncing = false);
-    }
+    });
   }
 
   @override
@@ -80,12 +70,14 @@ class _ApiDataScreenState extends State<ApiDataScreen> {
       appBar: _buildAppBar(),
       body: Column(
         children: [
-          _buildTerminalScanner(),
+          _buildTerminalIndicator(),
           _buildSearchField(),
           Expanded(
-            child: filteredLocations.isEmpty 
-                ? _buildEmptyState()
-                : _buildLocationList(filteredLocations),
+            child: _isInitializing 
+                ? _buildLoadingState()
+                : filteredLocations.isEmpty 
+                    ? _buildEmptyState()
+                    : _buildLocationList(filteredLocations),
           ),
           _buildSystemStats(),
         ],
@@ -106,39 +98,33 @@ class _ApiDataScreenState extends State<ApiDataScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'SENTINEL MULTI-SECTOR LOG',
+            'SENTINEL REACTIVE LOG',
             style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A), letterSpacing: 1.2),
           ),
           Text(
-            'MONITORING 40 TACTICAL NODES',
-            style: GoogleFonts.sourceCodePro(fontSize: 8, color: const Color(0xFF0EA5E9), fontWeight: FontWeight.bold),
+            'LIVE CLOUD STREAM ACTIVE',
+            style: GoogleFonts.sourceCodePro(fontSize: 8, color: const Color(0xFF10B981), fontWeight: FontWeight.bold),
           ),
         ],
       ),
       actions: [
-        IconButton(
-          onPressed: _isGlobalSyncing ? null : _syncAllSectors,
-          icon: Icon(
-            _isGlobalSyncing ? Icons.hourglass_empty : Icons.refresh, 
-            color: const Color(0xFF0EA5E9), 
-            size: 20
-          ),
+        Padding(
+          padding: const EdgeInsets.only(right: 16.0),
+          child: const Icon(Icons.rss_feed, color: Color(0xFF10B981), size: 18)
+              .animate(onPlay: (c) => c.repeat()).shimmer(duration: 2.seconds),
         ),
       ],
     );
   }
 
-  Widget _buildTerminalScanner() {
-    return Container(
+  Widget _buildTerminalIndicator() {
+    return SizedBox(
       width: double.infinity,
       height: 2,
-      color: const Color(0xFF0EA5E9).withValues(alpha: 0.1),
-      child: _isGlobalSyncing 
-          ? LinearProgressIndicator(
-              backgroundColor: Colors.transparent,
-              valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF0EA5E9).withValues(alpha: 0.5)),
-            ) 
-          : null,
+      child: LinearProgressIndicator(
+        backgroundColor: Colors.transparent,
+        valueColor: AlwaysStoppedAnimation<Color>(const Color(0xFF10B981).withValues(alpha: 0.2)),
+      ),
     );
   }
 
@@ -150,7 +136,7 @@ class _ApiDataScreenState extends State<ApiDataScreen> {
         onChanged: (val) => setState(() => _searchQuery = val),
         style: GoogleFonts.sourceCodePro(color: const Color(0xFF0F172A), fontSize: 13),
         decoration: InputDecoration(
-          hintText: "FILTER BY SECTOR...",
+          hintText: "SCAN SECTOR...",
           hintStyle: GoogleFonts.sourceCodePro(color: const Color(0xFF94A3B8), fontSize: 12),
           prefixIcon: const Icon(Icons.search, color: Color(0xFF94A3B8), size: 18),
           filled: true,
@@ -162,27 +148,38 @@ class _ApiDataScreenState extends State<ApiDataScreen> {
     );
   }
 
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(color: Color(0xFF10B981), strokeWidth: 2),
+          const SizedBox(height: 16),
+          Text('ESTABLISHING CLOUD BRIDGE...', style: GoogleFonts.orbitron(fontSize: 10, color: const Color(0xFF94A3B8))),
+        ],
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.satellite_alt_outlined, size: 48, color: Colors.white.withValues(alpha: 0.1)),
+          Icon(Icons.satellite_alt_outlined, size: 48, color: const Color(0xFFCBD5E1)),
           const SizedBox(height: 16),
-          Text('NO ACTIVE SIGNAL DETECTED', style: GoogleFonts.orbitron(fontSize: 10, color: const Color(0xFF475569))),
+          Text('NO SECTOR MATCHED', style: GoogleFonts.orbitron(fontSize: 10, color: const Color(0xFF94A3B8))),
         ],
       ),
     );
   }
 
   Widget _buildLocationList(List<LocationNode> filtered) {
-    // Grouping by first word (District)
     final Map<String, List<LocationNode>> grouped = {};
     for (var loc in filtered) {
       final district = loc.name.split(' ')[0].toUpperCase();
       grouped.putIfAbsent(district, () => []).add(loc);
     }
-
     final districts = grouped.keys.toList();
 
     return ListView.builder(
@@ -199,7 +196,7 @@ class _ApiDataScreenState extends State<ApiDataScreen> {
               padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4),
               child: Text(
                 '--- $district COMMAND ---',
-                style: GoogleFonts.orbitron(fontSize: 10, color: const Color(0xFF334155), fontWeight: FontWeight.bold, letterSpacing: 1.5),
+                style: GoogleFonts.orbitron(fontSize: 10, color: const Color(0xFF94A3B8), fontWeight: FontWeight.bold, letterSpacing: 1.5),
               ),
             ),
             ...nodes.map((node) => _buildSectorTile(node)),
@@ -212,7 +209,6 @@ class _ApiDataScreenState extends State<ApiDataScreen> {
 
   Widget _buildSectorTile(LocationNode node) {
     final data = _telemetryCache[node.name];
-    final isSyncing = _syncingNodes.contains(node.name);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -220,7 +216,7 @@ class _ApiDataScreenState extends State<ApiDataScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: isSyncing ? const Color(0xFF0EA5E9).withValues(alpha: 0.3) : const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2))],
       ),
       child: Row(
@@ -233,7 +229,7 @@ class _ApiDataScreenState extends State<ApiDataScreen> {
                 style: GoogleFonts.sourceCodePro(
                   fontSize: 12, 
                   fontWeight: FontWeight.bold, 
-                  color: isSyncing ? const Color(0xFF0EA5E9) : const Color(0xFF0F172A),
+                  color: const Color(0xFF0F172A),
                 ),
               ),
               Text(
@@ -243,13 +239,11 @@ class _ApiDataScreenState extends State<ApiDataScreen> {
             ],
           ),
           const Spacer(),
-          if (isSyncing)
-            const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1, color: Color(0xFF0EA5E9)))
-                .animate(onPlay: (c) => c.repeat()).shimmer()
-          else if (data != null)
+          if (data != null)
             _buildCompactTelemetry(data)
           else
-            Text('NO SIGNAL', style: GoogleFonts.sourceCodePro(fontSize: 8, color: const Color(0xFFCBD5E1))),
+            Text('SYNCING...', style: GoogleFonts.sourceCodePro(fontSize: 8, color: const Color(0xFF10B981)))
+                .animate(onPlay: (c) => c.repeat()).shimmer(),
         ],
       ),
     );
@@ -277,21 +271,30 @@ class _ApiDataScreenState extends State<ApiDataScreen> {
   }
 
   Widget _buildSystemStats() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildStatItem('UPSTREAM', 'CONNECTED', const Color(0xFF10B981)),
-          _buildStatItem('BUFFER', '100%', const Color(0xFF0EA5E9)),
-          _buildStatItem('NODES', '40/40', const Color(0xFF0EA5E9)),
-          _buildStatItem('SYNC', _isGlobalSyncing ? 'LIVE' : 'IDLE', _isGlobalSyncing ? const Color(0xFFF59E0B) : const Color(0xFF94A3B8)),
-        ],
-      ),
+    return StreamBuilder(
+      stream: FirebaseDatabase.instance.ref('mission_status').onValue,
+      builder: (context, snapshot) {
+        final val = snapshot.data?.snapshot.value as Map?;
+        final nodes = val?['active_nodes'] ?? 0;
+        final integrity = val?['system_integrity'] ?? 'NOMINAL';
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildStatItem('UPSTREAM', 'FIREBASE', const Color(0xFF10B981)),
+              _buildStatItem('NODES', '$nodes/40', const Color(0xFF0EA5E9)),
+              _buildStatItem('INTEGRITY', integrity, const Color(0xFF10B981)),
+              _buildStatItem('SYNC', 'AUTO-5S', const Color(0xFFF59E0B)),
+            ],
+          ),
+        );
+      }
     );
   }
 

@@ -48,6 +48,7 @@ class DefaultFirebaseOptions {
     authDomain: 'planetshield360.firebaseapp.com',
     storageBucket: 'planetshield360.firebasestorage.app',
     measurementId: 'G-KJSRPXGG3V',
+    databaseURL: 'https://planetshield360-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -56,6 +57,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '243048062039',
     projectId: 'planetshield360',
     storageBucket: 'planetshield360.firebasestorage.app',
+    databaseURL: 'https://planetshield360-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -65,6 +67,7 @@ class DefaultFirebaseOptions {
     projectId: 'planetshield360',
     storageBucket: 'planetshield360.firebasestorage.app',
     iosBundleId: 'com.example.planetshield360',
+    databaseURL: 'https://planetshield360-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -74,6 +77,7 @@ class DefaultFirebaseOptions {
     projectId: 'planetshield360',
     storageBucket: 'planetshield360.firebasestorage.app',
     iosBundleId: 'com.example.planetshield360',
+    databaseURL: 'https://planetshield360-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -84,5 +88,6 @@ class DefaultFirebaseOptions {
     authDomain: 'planetshield360.firebaseapp.com',
     storageBucket: 'planetshield360.firebasestorage.app',
     measurementId: 'G-CWKG1NV6EN',
+    databaseURL: 'https://planetshield360-default-rtdb.firebaseio.com',
   );
 }
