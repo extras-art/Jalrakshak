@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:planetshield360/screens/dashboard_screen.dart';
+import 'package:planetshield360/screens/home_screen.dart';
 
 
 class PlanetShieldApp extends StatelessWidget {
@@ -367,7 +367,7 @@ class _HeroSection extends StatelessWidget {
                 primary: true,
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                  MaterialPageRoute(builder: (_) => const HomeScreen()),
                 ),
               ),
               const SizedBox(width: 10),

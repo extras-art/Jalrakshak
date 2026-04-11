@@ -57,21 +57,37 @@ class DashboardData {
     }
   }
 
-  DashboardData copyWithLocation(String newLoc) {
+  DashboardData copyWith({
+    String? location,
+    double? rainfall,
+    double? temperature,
+    double? humidity,
+    double? waterLevel,
+    double? aiConfidence,
+    double? soilSaturation,
+    double? aqi,
+    RiskLevel? riskLevel,
+    String? reasoning,
+    String? actionInstruction,
+    List<double>? historicalRainfall,
+    List<SectorRisk>? sectors,
+  }) {
     return DashboardData(
-      location: newLoc,
-      rainfall: rainfall,
-      temperature: temperature,
-      humidity: humidity,
-      waterLevel: waterLevel,
-      aiConfidence: aiConfidence,
-      soilSaturation: soilSaturation,
-      aqi: aqi,
-      riskLevel: riskLevel,
-      reasoning: reasoning,
-      actionInstruction: actionInstruction,
-      historicalRainfall: historicalRainfall,
-      sectors: sectors,
+      location: location ?? this.location,
+      rainfall: rainfall ?? this.rainfall,
+      temperature: temperature ?? this.temperature,
+      humidity: humidity ?? this.humidity,
+      waterLevel: waterLevel ?? this.waterLevel,
+      aiConfidence: aiConfidence ?? this.aiConfidence,
+      soilSaturation: soilSaturation ?? this.soilSaturation,
+      aqi: aqi ?? this.aqi,
+      riskLevel: riskLevel ?? this.riskLevel,
+      reasoning: reasoning ?? this.reasoning,
+      actionInstruction: actionInstruction ?? this.actionInstruction,
+      historicalRainfall: historicalRainfall ?? this.historicalRainfall,
+      sectors: sectors ?? this.sectors,
     );
   }
+
+  DashboardData copyWithLocation(String newLoc) => copyWith(location: newLoc);
 }

@@ -4,6 +4,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/dashboard_data.dart';
 import 'risk_map_screen.dart';
+import 'alerts_screen.dart';
+import 'simulation_screen.dart';
+import 'citizen_report_screen.dart';
+import 'report_screen.dart';
+import '../services/weather_service.dart';
+import '../models/weather_data.dart';
+import '../models/location_node.dart';
+import '../data/location_data.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,12 +21,15 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> with TickerProviderStateMixin {
-  String _selectedLocation = 'Sion';
+  String _selectedLocation = 'Kurla East';
   String _selectedStream = 'All Streams';
-  int _simulationIndex = 0;
   
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  
+  final WeatherService _weatherService = WeatherService();
+  WeatherData? _liveWeather;
+  bool _isLoadingWeather = true;
 
   final List<DashboardData> _scenarios = [
     DashboardData(
@@ -94,6 +105,24 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     _pulseAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    _fetchWeather();
+  }
+
+  Future<void> _fetchWeather() async {
+    setState(() => _isLoadingWeather = true);
+    
+    // Find coordinates for the selected tactical node
+    final node = locations.firstWhere((n) => n.name == _selectedLocation, 
+        orElse: () => locations[0]);
+
+    final weather = await _weatherService.fetchCurrentWeather(node.latitude, node.longitude);
+    if (mounted) {
+      setState(() {
+        _liveWeather = weather;
+        _isLoadingWeather = false;
+      });
+    }
   }
 
   @override
@@ -102,14 +131,19 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     super.dispose();
   }
 
-  DashboardData get _currentData => _scenarios[_simulationIndex].location == _selectedLocation 
-      ? _scenarios[_simulationIndex]
-      : _scenarios[_simulationIndex].copyWithLocation(_selectedLocation);
+  DashboardData get _currentData {
+    final base = _scenarios[0].location == _selectedLocation 
+        ? _scenarios[0]
+        : _scenarios[0].copyWithLocation(_selectedLocation);
+    
+    if (_liveWeather == null) return base;
 
-  void _nextSimulation() {
-    setState(() {
-      _simulationIndex = (_simulationIndex + 1) % _scenarios.length;
-    });
+    // Merge live telemetry into the simulation baseline
+    return base.copyWith(
+      temperature: _liveWeather!.temperature,
+      humidity: _liveWeather!.humidity,
+      soilSaturation: _liveWeather!.soilMoisture,
+    );
   }
 
   @override
@@ -127,7 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
+              _buildHeader(data),
               const SizedBox(height: 24),
               _buildStreamSelector(),
               const SizedBox(height: 24),
@@ -146,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(DashboardData data) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -170,50 +204,99 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                   underline: const SizedBox(),
                   icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
                   style: GoogleFonts.poppins(
-                    fontSize: 28,
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF0F172A),
                   ),
-                  items: ['Sion', 'Kurla', 'Andheri', 'Dharavi'].map((String val) {
+                  items: locations.map((LocationNode node) {
                     return DropdownMenuItem<String>(
-                      value: val,
-                      child: Text(val),
+                      value: node.name,
+                      child: Text(node.name),
                     );
                   }).toList(),
-                  onChanged: (val) => setState(() => _selectedLocation = val!),
+                  onChanged: (val) {
+                    setState(() => _selectedLocation = val!);
+                    _fetchWeather();
+                  },
                 ),
+                const SizedBox(width: 12),
+                if (_isLoadingWeather)
+                  const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0EA5E9)))
+                else
+                  GestureDetector(
+                    onTap: _fetchWeather,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(width: 6, height: 6, decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle)),
+                          const SizedBox(width: 4),
+                          Text('LIVE', style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.refresh, size: 10, color: Color(0xFF10B981)),
+                        ],
+                      ),
+                    ),
+                  ).animate().fadeIn(),
               ],
             ),
           ],
         ),
-        _buildActiveAgentsCounter(),
+        _buildActiveAgentsCounter(data),
       ],
     );
   }
 
-  Widget _buildActiveAgentsCounter() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0EA5E9).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.psychology, color: Color(0xFF0EA5E9), size: 18),
-          const SizedBox(width: 8),
-          Text(
-            'AGENTS: 7 ACTIVE',
-            style: GoogleFonts.orbitron(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF0EA5E9),
-            ),
+  Widget _buildActiveAgentsCounter(DashboardData data) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0EA5E9).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF0EA5E9).withValues(alpha: 0.2)),
           ),
-        ],
-      ),
-    ).animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(duration: 3.seconds);
+          child: Row(
+            children: [
+              const Icon(Icons.psychology, color: Color(0xFF0EA5E9), size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'AGENTS: 7 ACTIVE',
+                style: GoogleFonts.orbitron(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0EA5E9),
+                ),
+              ),
+            ],
+          ),
+        ).animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(duration: 3.seconds),
+        const SizedBox(height: 8),
+        ElevatedButton.icon(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ReportScreen(data: data)),
+            );
+          },
+          icon: const Icon(Icons.description, size: 16, color: Colors.white),
+          label: Text(
+            'VIEW BRIEF',
+            style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0EA5E9),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildStreamSelector() {
@@ -263,17 +346,28 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       mainAxisSpacing: 12,
       childAspectRatio: 1.1,
       children: [
-        _buildKPICard('Rainfall', '${data.rainfall}mm', 'Daily Acc', Icons.water_drop, const Color(0xFF38BDF8)),
-        _buildKPICard('Water Lvl', '${(data.waterLevel * 100).toInt()}%', 'Surge Cap', Icons.waves, const Color(0xFF818CF8)),
-        _buildKPICard('AI Conf', '${(data.aiConfidence * 100).toInt()}%', 'Model Stat', Icons.auto_awesome, const Color(0xFFC084FC)),
-        _buildKPICard('Soil Sat', '${(data.soilSaturation * 100).toInt()}%', 'Hydrology', Icons.opacity, const Color(0xFFF472B6)),
-        _buildKPICard('Temp', '${data.temperature}°C', 'Atmospheric', Icons.thermostat, const Color(0xFFFB923C)),
-        _buildKPICard('AQI', '${data.aqi.toInt()}', 'Air Quality', Icons.air, const Color(0xFF4ADE80)),
+        _buildKPICard('Rainfall', '${data.rainfall}mm', 'Daily Acc', Icons.water_drop, const Color(0xFF38BDF8), false),
+        _buildKPICard('Water Lvl', '${(data.waterLevel * 100).toInt()}%', 'Surge Cap', Icons.waves, const Color(0xFF818CF8), false),
+        _buildKPICard('AI Conf', '${(data.aiConfidence * 100).toInt()}%', 'Model Stat', Icons.auto_awesome, const Color(0xFFC084FC), false),
+        _buildKPICard('Soil Sat', '${(data.soilSaturation * 100).toInt()}%', 'Hydrology', Icons.opacity, const Color(0xFFF472B6), _isLoadingWeather),
+        _buildKPICard('Temp', '${data.temperature}°C', 'Atmospheric', Icons.thermostat, const Color(0xFFFB923C), _isLoadingWeather),
+        _buildKPICard('AQI', '${data.aqi.toInt()}', 'Air Quality', Icons.air, const Color(0xFF4ADE80), false),
       ],
     );
   }
 
-  Widget _buildKPICard(String title, String val, String sub, IconData icon, Color color) {
+  Widget _buildKPICard(String title, String val, String sub, IconData icon, Color color, bool loading) {
+    if (loading) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE2E8F0)))),
+      ).animate(onPlay: (c) => c.repeat()).shimmer(duration: 1.5.seconds);
+    }
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -550,9 +644,24 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _ActionButton(Icons.campaign, 'Alarm', Colors.orange),
-          _ActionButton(Icons.bolt, 'Simulate', const Color(0xFF0EA5E9), onTab: _nextSimulation),
-          _ActionButton(Icons.emergency_share, 'Broadcast', Colors.red),
+          _ActionButton(Icons.campaign, 'Alarm', Colors.orange, onTab: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AlertsScreen()),
+            );
+          }),
+          _ActionButton(Icons.bolt, 'Simulate', const Color(0xFF0EA5E9), onTab: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SimulationScreen()),
+            );
+          }),
+          _ActionButton(Icons.add_a_photo, 'Report', const Color(0xFF8B5CF6), onTab: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CitizenReportScreen()),
+            );
+          }),
           _ActionButton(Icons.map, 'Deploy', Colors.teal, onTab: () {
             Navigator.push(
               context,

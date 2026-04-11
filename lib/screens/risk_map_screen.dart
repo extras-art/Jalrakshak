@@ -5,7 +5,8 @@ import '../models/dashboard_data.dart';
 
 class RiskMapScreen extends StatefulWidget {
   final DashboardData initialData;
-  const RiskMapScreen({super.key, required this.initialData});
+  final bool isTab;
+  const RiskMapScreen({super.key, required this.initialData, this.isTab = false});
 
   @override
   State<RiskMapScreen> createState() => _RiskMapScreenState();
@@ -132,16 +133,17 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF0F172A)),
-          style: IconButton.styleFrom(
-            backgroundColor: Colors.white,
-            padding: const EdgeInsets.all(12),
-            shadowColor: Colors.black.withValues(alpha: 0.1),
-            elevation: 4,
+        if (!widget.isTab)
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF0F172A)),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white,
+              padding: const EdgeInsets.all(12),
+              shadowColor: Colors.black.withValues(alpha: 0.1),
+              elevation: 4,
+            ),
           ),
-        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
