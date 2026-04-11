@@ -62,4 +62,15 @@ class FirebaseService {
       // Mission Log: Silent failure in production
     }
   }
+
+  /// Fetches the latest telemetry for a specific location
+  Future<DataSnapshot?> getLatestData(String location) async {
+    try {
+      final sanitizedLocation = location.replaceAll(' ', '_');
+      final snapshot = await _dbRef.child('telemetry/latest/$sanitizedLocation').get();
+      return snapshot;
+    } catch (e) {
+      return null;
+    }
+  }
 }

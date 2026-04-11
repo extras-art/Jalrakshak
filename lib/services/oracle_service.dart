@@ -5,11 +5,13 @@ class OraclePrediction {
   final RiskLevel futureRisk;
   final int timeToCritical; // minutes
   final String forecastMessage;
+  final double confidence;
 
   OraclePrediction({
     required this.futureRisk,
     required this.timeToCritical,
     required this.forecastMessage,
+    this.confidence = 0.85,
   });
 }
 
