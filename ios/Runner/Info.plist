@@ -45,5 +45,17 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Camera & Photo permissions (image_picker) -->
+	<key>NSCameraUsageDescription</key>
+	<string>PlanetShield360 VERITAS needs camera access to capture ground-truth disaster evidence.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PlanetShield360 VERITAS needs photo library access to upload disaster evidence.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>PlanetShield360 VERITAS saves captured evidence to your photo library.</string>
+	<!-- Location permissions (geolocator) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>PlanetShield360 VERITAS uses your location to tag reports with precise GPS coordinates.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>PlanetShield360 VERITAS uses your location to tag reports with precise GPS coordinates.</string>
 </dict>
 </plist>
