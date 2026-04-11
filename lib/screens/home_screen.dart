@@ -7,6 +7,7 @@ import 'simulation_screen.dart';
 import 'citizen_report_screen.dart';
 import 'report_screen.dart';
 import 'api_data_screen.dart';
+import 'intelligence_hub_screen.dart';
 import '../models/dashboard_data.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -48,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
       const CitizenReportScreen(isTab: true),
       ReportScreen(data: _sharedData, isTab: true),
       const ApiDataScreen(isTab: true),
+      const IntelligenceHubScreen(isTab: true),
     ];
   }
 
@@ -111,6 +113,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icon(Icons.code_outlined, size: 22),
                   activeIcon: Icon(Icons.code, size: 22),
                   label: 'SENTINEL',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.hub_outlined, size: 22),
+                  activeIcon: Icon(Icons.hub_rounded, size: 22),
+                  label: 'INTEL HUB',
                 ),
               ],
             ),

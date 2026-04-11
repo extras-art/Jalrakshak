@@ -349,7 +349,7 @@ class _HeroSection extends StatelessWidget {
               TextSpan(text: 'Shield',
                   style: TextStyle(fontSize: 50, fontWeight: FontWeight.w700,
                       color: PS.accent, letterSpacing: -1.5, height: 1.1)),
-              TextSpan(text: '360 (Version 2.0)',
+              TextSpan(text: '360 (Version 2.3)',
                   style: TextStyle(fontSize: 50, fontWeight: FontWeight.w300,
                       color: PS.textSec, letterSpacing: -1.5, height: 1.1)),
             ])),
