@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "243048062039",
+    "project_id": "planetshield360",
+    "storage_bucket": "planetshield360.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:243048062039:android:caf052d92a609793501712",
+        "android_client_info": {
+          "package_name": "com.example.planetshield360"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6epl2-ypB7DAUhNCFpX3aYpBNwRCbko4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
