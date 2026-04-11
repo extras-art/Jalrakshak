@@ -201,7 +201,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       backgroundColor: OracleService.demoMode ? const Color(0xFFEF4444) : const Color(0xFF0EA5E9),
       icon: Icon(OracleService.demoMode ? Icons.warning_amber_rounded : Icons.bolt, color: Colors.white),
       label: Text(OracleService.demoMode ? 'EXIT DEMO' : 'DEMO MODE',
-          style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white)),
+          style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
     ).animate(key: ValueKey(OracleService.demoMode)).scale();
   }
 
@@ -212,7 +212,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -223,7 +223,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           // Logo
           Container(
-            width: 44, height: 44,
+            width: 60, height: 60,
             decoration: BoxDecoration(
               gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)]),
               borderRadius: BorderRadius.circular(12),
@@ -238,14 +238,14 @@ class _DashboardScreenState extends State<DashboardScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('STRATUM COMMAND', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF0EA5E9), letterSpacing: 1.5)),
+                Text('STRATUM COMMAND', style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF0EA5E9), letterSpacing: 1.5)),
                 Row(
                   children: [
                     DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedLocation,
                         icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B), size: 16),
-                        style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
+                        style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
                         dropdownColor: Colors.white,
                         items: locations.map((LocationNode node) => DropdownMenuItem<String>(value: node.name, child: Text(node.name))).toList(),
                         onChanged: (val) { setState(() { _selectedLocation = val!; _isLoadingWeather = true; }); _startCloudStream(); },
@@ -274,10 +274,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ),
                   ),
                   const SizedBox(width: 5),
-                  Text('LIVE', style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
+                  Text('LIVE', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 18),
               // Risk badge
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -286,9 +286,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: rColor.withValues(alpha: 0.3)),
                 ),
-                child: Text(risk.name.toUpperCase(), style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: rColor)),
+                child: Text(risk.name.toUpperCase(), style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold, color: rColor)),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 18),
               // View Brief button
               GestureDetector(
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportScreen(data: data))),
@@ -296,9 +296,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)]),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text('VIEW BRIEF', style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white)),
+                  child: Text('VIEW BRIEF', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
             ],
@@ -312,7 +312,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildAgentPipeline(DashboardData data) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
@@ -325,32 +325,32 @@ class _DashboardScreenState extends State<DashboardScreen>
           Row(
             children: [
               const Icon(Icons.account_tree_rounded, color: Color(0xFF6366F1), size: 18),
-              const SizedBox(width: 10),
-              Text('STRATUM COGNITIVE PIPELINE — 7 AGENTS ACTIVE', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF6366F1), letterSpacing: 0.5)),
+              const SizedBox(width: 14),
+              Text('STRATUM COGNITIVE PIPELINE — 7 AGENTS ACTIVE', style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF6366F1), letterSpacing: 0.5)),
               const Spacer(),
               AnimatedBuilder(
                 animation: _pulseCtrl,
                 builder: (_, __) => Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withValues(alpha: 0.1 + 0.05 * _pulseCtrl.value),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text('ALL SYSTEMS GO', style: GoogleFonts.orbitron(fontSize: 7, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
+                  child: Text('ALL SYSTEMS GO', style: GoogleFonts.orbitron(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
           SizedBox(
-            height: 110,
+            height: 140,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: _agents.length,
               itemBuilder: (_, i) => _buildAgentCard(_agents[i], i, data),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           // Pipeline flow line
           _buildPipelineConnector(data),
         ],
@@ -369,9 +369,9 @@ class _DashboardScreenState extends State<DashboardScreen>
       builder: (_, __) {
         final pulse = (sin(_agentCtrl.value * 2 * pi + index * 0.8) + 1) / 2;
         return Container(
-          width: 110,
+          width: 130,
           margin: const EdgeInsets.only(right: 10),
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: agent.color.withValues(alpha: 0.06 + 0.03 * pulse),
             borderRadius: BorderRadius.circular(16),
@@ -387,7 +387,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 children: [
                   Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(color: agent.color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
+                    decoration: BoxDecoration(color: agent.color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
                     child: Icon(agent.icon, color: agent.color, size: 14),
                   ),
                   Container(
@@ -402,10 +402,10 @@ class _DashboardScreenState extends State<DashboardScreen>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(agent.name, style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: agent.color)),
+                  Text(agent.name, style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: agent.color)),
                   const SizedBox(height: 2),
-                  Text(agent.role, style: GoogleFonts.poppins(fontSize: 8, color: const Color(0xFF64748B)), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 6),
+                  Text(agent.role, style: GoogleFonts.poppins(fontSize: 17, color: const Color(0xFF64748B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 18),
                   // Activity bar
                   ClipRRect(
                     borderRadius: BorderRadius.circular(3),
@@ -413,7 +413,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       value: dynamicActivity * (0.85 + 0.15 * pulse),
                       backgroundColor: agent.color.withValues(alpha: 0.1),
                       valueColor: AlwaysStoppedAnimation(agent.color),
-                      minHeight: 4,
+                      minHeight: 6,
                     ),
                   ),
                 ],
@@ -451,9 +451,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           child: Row(
             children: [
               Icon(Icons.check_circle_rounded, color: riskColor, size: 12),
-              const SizedBox(width: 6),
+              const SizedBox(width: 14),
               Text('${(data.aiConfidence * 100).toInt()}% VERIFIED BY VERITAS',
-                  style: GoogleFonts.orbitron(fontSize: 7, fontWeight: FontWeight.bold, color: riskColor)),
+                  style: GoogleFonts.orbitron(fontSize: 20, fontWeight: FontWeight.bold, color: riskColor)),
             ],
           ),
         ),
@@ -480,7 +480,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         crossAxisCount: isMobile ? 2 : 3,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: isMobile ? 1.6 : 2.2,
+        childAspectRatio: isMobile ? 1.4 : 2.0,
         children: kpis.asMap().entries.map((e) => _buildKPITile(e.value, e.key)).toList(),
       ),
     );
@@ -489,7 +489,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildKPITile((String, String, String, Color, String) kpi, int index) {
     final (emoji, label, val, color, agent) = kpi;
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -501,19 +501,19 @@ class _DashboardScreenState extends State<DashboardScreen>
           : Row(
               children: [
                 Container(
-                  width: 42, height: 42,
+                  width: 60, height: 60,
                   decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                   child: Center(child: Text(emoji, style: const TextStyle(fontSize: 18))),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(val, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
-                      Text(label, style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: const Color(0xFF64748B))),
-                      Text(agent, style: GoogleFonts.orbitron(fontSize: 7, color: color)),
+                      Text(val, style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                      Text(label, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: const Color(0xFF64748B))),
+                      Text(agent, style: GoogleFonts.orbitron(fontSize: 20, color: color)),
                     ],
                   ),
                 ),
@@ -574,7 +574,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Container(
       margin: const EdgeInsets.only(bottom: 0),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -588,7 +588,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             builder: (_, __) {
               final pulse = (sin(_agentCtrl.value * 2 * pi) + 1) / 2;
               return Container(
-                width: 48, height: 48,
+                width: 58, height: 58,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.08 + 0.05 * pulse),
                   borderRadius: BorderRadius.circular(14),
@@ -604,14 +604,14 @@ class _DashboardScreenState extends State<DashboardScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('⚡ ORACLE — TEMPORAL PREDICTION', style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: color)),
-                const SizedBox(height: 5),
+                Text('⚡ ORACLE — TEMPORAL PREDICTION', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: color)),
+                const SizedBox(height: 12),
                 Text(
                   isCritical ? '🚨 CRITICAL IN ${prediction.timeToCritical} min — HIGH ALERT' : '🟢 Conditions stable — no imminent threat detected',
-                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
+                  style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
                 ),
-                const SizedBox(height: 4),
-                Text(prediction.forecastMessage, style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF64748B))),
+                const SizedBox(height: 18),
+                Text(prediction.forecastMessage, style: GoogleFonts.poppins(fontSize: 17, color: const Color(0xFF64748B))),
               ],
             ),
           ),
@@ -622,7 +622,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildReasoningCard(DashboardData data) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -634,11 +634,11 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           Row(children: [
             const Icon(Icons.biotech, color: Color(0xFF8B5CF6), size: 16),
-            const SizedBox(width: 8),
-            Text('PROBE — RISK ANALYSIS ENGINE', style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: const Color(0xFF8B5CF6))),
+            const SizedBox(width: 12),
+            Text('PROBE — RISK ANALYSIS ENGINE', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF8B5CF6))),
           ]),
-          const SizedBox(height: 10),
-          Text(data.reasoning, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF475569), height: 1.5)),
+          const SizedBox(height: 18),
+          Text(data.reasoning, style: GoogleFonts.poppins(fontSize: 15, color: const Color(0xFF475569), height: 1.5)),
         ],
       ),
     );
@@ -649,7 +649,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final color = isCritical ? const Color(0xFFEF4444) : const Color(0xFFEC4899);
 
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: isCritical ? const Color(0xFFFEF2F2) : Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -668,9 +668,9 @@ class _DashboardScreenState extends State<DashboardScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('SCRIBE — MISSION DIRECTIVE', style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: color)),
-                const SizedBox(height: 4),
-                Text(data.actionInstruction, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A), height: 1.4)),
+                Text('SCRIBE — MISSION DIRECTIVE', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: color)),
+                const SizedBox(height: 18),
+                Text(data.actionInstruction, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A), height: 1.4)),
               ],
             ),
           ),
@@ -681,8 +681,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildAgentRadar(DashboardData data) {
     return Container(
-      height: 280,
-      padding: const EdgeInsets.all(16),
+      height: 320,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -694,10 +694,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           Row(children: [
             const Icon(Icons.radar, color: Color(0xFF0EA5E9), size: 14),
-            const SizedBox(width: 6),
-            Text('AGENT ACTIVITY RADAR', style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: const Color(0xFF0EA5E9))),
+            const SizedBox(width: 14),
+            Text('AGENT ACTIVITY RADAR', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF0EA5E9))),
           ]),
-          const SizedBox(height: 4),
+          const SizedBox(height: 18),
           Expanded(
             child: AnimatedBuilder(
               animation: _agentCtrl,
@@ -713,8 +713,8 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildRainfallChart(DashboardData data) {
     return Container(
-      height: 180,
-      padding: const EdgeInsets.all(16),
+      height: 220,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -726,10 +726,10 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           Row(children: [
             const Icon(Icons.analytics, color: Color(0xFF38BDF8), size: 14),
-            const SizedBox(width: 6),
-            Text('PRECIPITATION TREND', style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: const Color(0xFF38BDF8))),
+            const SizedBox(width: 14),
+            Text('PRECIPITATION TREND', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF38BDF8))),
           ]),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Expanded(
             child: LineChart(LineChartData(
               gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (_) => FlLine(color: const Color(0xFFF1F5F9), strokeWidth: 1)),
@@ -741,7 +741,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                   isCurved: true,
                   color: const Color(0xFF38BDF8),
                   barWidth: 3,
-                  dotData: FlDotData(show: true, getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(radius: 3, color: const Color(0xFF38BDF8), strokeWidth: 0, strokeColor: Colors.transparent)),
+                  dotData: FlDotData(show: true, getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(radius: 4, color: const Color(0xFF38BDF8), strokeWidth: 0, strokeColor: Colors.transparent)),
                   belowBarData: BarAreaData(show: true, gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [const Color(0xFF38BDF8).withValues(alpha: 0.15), const Color(0xFF38BDF8).withValues(alpha: 0.0)])),
                 ),
               ],
@@ -758,7 +758,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -770,16 +770,16 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           Row(children: [
             const Icon(Icons.leaderboard, color: Color(0xFFEF4444), size: 16),
-            const SizedBox(width: 8),
-            Text('PRIORITY — TOP RISK ZONES', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
+            const SizedBox(width: 12),
+            Text('PRIORITY — TOP RISK ZONES', style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: const Color(0xFFEF4444).withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
-              child: Text('LIVE RANKING', style: GoogleFonts.orbitron(fontSize: 7, color: const Color(0xFFEF4444))),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(color: const Color(0xFFEF4444).withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
+              child: Text('LIVE RANKING', style: GoogleFonts.orbitron(fontSize: 20, color: const Color(0xFFEF4444))),
             ),
           ]),
-          const SizedBox(height: 14),
+          const SizedBox(height: 18),
           Row(
             children: _topRisks.asMap().entries.map((e) {
               final rank = e.key + 1;
@@ -788,7 +788,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               return Expanded(
                 child: Container(
                   margin: EdgeInsets.only(right: e.key < 2 ? 10 : 0),
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(16),
@@ -799,15 +799,15 @@ class _DashboardScreenState extends State<DashboardScreen>
                     children: [
                       Row(children: [
                         Container(
-                          width: 20, height: 20,
-                          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
-                          child: Center(child: Text('#$rank', style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white))),
+                          width: 30, height: 30,
+                          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
+                          child: Center(child: Text('#$rank', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white))),
                         ),
-                        const SizedBox(width: 6),
-                        Expanded(child: Text(p.location, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)), overflow: TextOverflow.ellipsis)),
+                        const SizedBox(width: 14),
+                        Expanded(child: Text(p.location, style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)), overflow: TextOverflow.ellipsis)),
                       ]),
-                      const SizedBox(height: 6),
-                      Text(p.risk.name.toUpperCase(), style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w900, color: color)),
+                      const SizedBox(height: 18),
+                      Text(p.risk.name.toUpperCase(), style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w900, color: color)),
                     ],
                   ),
                 ).animate(delay: (rank * 80).ms).fadeIn().slideX(begin: 0.1),
@@ -830,7 +830,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -840,8 +840,8 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('QUICK DEPLOY', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF94A3B8), letterSpacing: 1)),
-          const SizedBox(height: 16),
+          Text('QUICK DEPLOY', style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF94A3B8), letterSpacing: 1)),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: actions.asMap().entries.map((e) {
@@ -851,7 +851,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 child: Column(
                   children: [
                     Container(
-                      width: 52, height: 52,
+                      width: 60, height: 60,
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
@@ -860,8 +860,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ),
                       child: Icon(icon, color: color, size: 22),
                     ),
-                    const SizedBox(height: 8),
-                    Text(label, style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF475569))),
+                    const SizedBox(height: 12),
+                    Text(label, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF475569))),
                   ],
                 ).animate(delay: (e.key * 60).ms).fadeIn().slideY(begin: 0.2),
               );
@@ -945,7 +945,7 @@ class _AgentRadarPainter extends CustomPainter {
 
       // Label
       final tp = TextPainter(
-        text: TextSpan(text: agents[i].id, style: TextStyle(color: agents[i].color, fontSize: 7, fontWeight: FontWeight.bold)),
+        text: TextSpan(text: agents[i].id, style: TextStyle(color: agents[i].color, fontSize: 20, fontWeight: FontWeight.bold)),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, Offset(labelX - tp.width / 2, labelY - tp.height / 2));
