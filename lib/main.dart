@@ -16,7 +16,7 @@ Future<void> main() async {
 
   runApp(
     MaterialApp(
-      title: 'PlanetShield360 (1.4)',
+      title: 'PlanetShield360 (1.5)',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

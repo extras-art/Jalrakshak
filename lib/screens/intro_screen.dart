@@ -129,7 +129,7 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
                     border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.2)),
                   ),
                   child: Text(
-                    'PLANETSHIELD360 GENESIS',
+                    'INTELLIGENCE AEGIS',
                     style: GoogleFonts.orbitron(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -155,9 +155,9 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
                         ),
                       ),
                       TextSpan(
-                        text: 'INTELLIGENCE AEGIS',
+                        text: 'PLANETSHIELD360',
                         style: GoogleFonts.orbitron(
-                          fontSize: _isMobile ? 32 : 56,
+                          fontSize: _isMobile ? 28 : 56,
                           fontWeight: FontWeight.w900,
                           color: const Color(0xFF0F172A),
                           letterSpacing: _isMobile ? -1 : -2,
