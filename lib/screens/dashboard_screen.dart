@@ -63,6 +63,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen>
     with TickerProviderStateMixin {
+  bool get isMobile => MediaQuery.of(context).size.width <= 600;
   String _selectedLocation = 'Kurla East';
 
   late AnimationController _pulseCtrl;
@@ -172,8 +173,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     final data = _currentData;
-    final size = MediaQuery.of(context).size;
-    final isMobile = size.width <= 600;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF0F7FF),
@@ -219,93 +218,110 @@ class _DashboardScreenState extends State<DashboardScreen>
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [BoxShadow(color: const Color(0xFF0EA5E9).withValues(alpha: 0.06), blurRadius: 20, offset: const Offset(0, 4))],
       ),
-      child: Row(
+      child: Column(
         children: [
-          // Logo
-          Container(
-            width: 60, height: 60,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)]),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [BoxShadow(color: const Color(0xFF0EA5E9).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
-            ),
-            child: const Icon(Icons.hub, color: Colors.white, size: 22),
-          ),
-          const SizedBox(width: 14),
+          Row(
+            children: [
+              // Logo
+              Container(
+                width: isMobile ? 48 : 60,
+                height: isMobile ? 48 : 60,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)]),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [BoxShadow(color: const Color(0xFF0EA5E9).withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 4))],
+                ),
+                child: Icon(Icons.hub, color: Colors.white, size: isMobile ? 18 : 22),
+              ),
+              const SizedBox(width: 14),
 
-          // Title + location
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('STRATUM COMMAND', style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF0EA5E9), letterSpacing: 1.5)),
-                Row(
+              // Title + location
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedLocation,
-                        icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B), size: 16),
-                        style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
-                        dropdownColor: Colors.white,
-                        items: locations.map((LocationNode node) => DropdownMenuItem<String>(value: node.name, child: Text(node.name))).toList(),
-                        onChanged: (val) { setState(() { _selectedLocation = val!; _isLoadingWeather = true; }); _startCloudStream(); },
-                      ),
+                    Text('STRATUM COMMAND', style: GoogleFonts.orbitron(fontSize: isMobile ? 11 : 15, fontWeight: FontWeight.bold, color: const Color(0xFF0EA5E9), letterSpacing: 1.5)),
+                    Row(
+                      children: [
+                        DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedLocation,
+                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B), size: 16),
+                            style: GoogleFonts.poppins(fontSize: isMobile ? 18 : 22, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
+                            dropdownColor: Colors.white,
+                            items: locations.map((LocationNode node) => DropdownMenuItem<String>(value: node.name, child: Text(node.name))).toList(),
+                            onChanged: (val) { setState(() { _selectedLocation = val!; _isLoadingWeather = true; }); _startCloudStream(); },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              // LIVE indicator
-              Row(
-                children: [
-                  AnimatedBuilder(
-                    animation: _pulseCtrl,
-                    builder: (_, __) => Container(
-                      width: 8, height: 8,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.5 + 0.5 * _pulseCtrl.value),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                  Text('LIVE', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
-                ],
               ),
-              const SizedBox(height: 18),
-              // Risk badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: rColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: rColor.withValues(alpha: 0.3)),
-                ),
-                child: Text(risk.name.toUpperCase(), style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold, color: rColor)),
-              ),
-              const SizedBox(height: 18),
-              // View Brief button
-              GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportScreen(data: data))),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)]),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text('VIEW BRIEF', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
-                ),
-              ),
+              if (!isMobile) ..._buildTopBarStatus(data, rColor, risk),
             ],
           ),
+          if (isMobile) ...[
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: _buildTopBarStatus(data, rColor, risk),
+            ),
+          ],
         ],
       ),
     ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.1);
+  }
+
+  List<Widget> _buildTopBarStatus(DashboardData data, Color rColor, RiskLevel risk) {
+    return [
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // LIVE indicator
+          Row(
+            children: [
+              AnimatedBuilder(
+                animation: _pulseCtrl,
+                builder: (_, __) => Container(
+                  width: 8, height: 8,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.5 + 0.5 * _pulseCtrl.value),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 5),
+              Text('LIVE', style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Risk badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: rColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: rColor.withValues(alpha: 0.3)),
+            ),
+            child: Text(risk.name.toUpperCase(), style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.bold, color: rColor)),
+          ),
+        ],
+      ),
+      const SizedBox(width: 14),
+      // View Brief button
+      GestureDetector(
+        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ReportScreen(data: data))),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)]),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text('VIEW BRIEF', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+        ),
+      ),
+    ];
   }
 
   // ─── 7-AGENT PIPELINE ─────────────────────────────────────────────────────
@@ -326,17 +342,23 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               const Icon(Icons.account_tree_rounded, color: Color(0xFF6366F1), size: 18),
               const SizedBox(width: 14),
-              Text('STRATUM COGNITIVE PIPELINE — 7 AGENTS ACTIVE', style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF6366F1), letterSpacing: 0.5)),
-              const Spacer(),
+              Expanded(
+                child: Text(
+                  isMobile ? 'STRATUM PIPELINE — 7 AGENTS' : 'STRATUM COGNITIVE PIPELINE — 7 AGENTS ACTIVE',
+                  style: GoogleFonts.orbitron(fontSize: isMobile ? 12 : 15, fontWeight: FontWeight.bold, color: const Color(0xFF6366F1), letterSpacing: 0.5),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
               AnimatedBuilder(
                 animation: _pulseCtrl,
                 builder: (_, __) => Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withValues(alpha: 0.1 + 0.05 * _pulseCtrl.value),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text('ALL SYSTEMS GO', style: GoogleFonts.orbitron(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
+                  child: Text(isMobile ? 'GO' : 'ALL SYSTEMS GO', style: GoogleFonts.orbitron(fontSize: isMobile ? 10 : 20, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
                 ),
               ),
             ],
@@ -451,9 +473,9 @@ class _DashboardScreenState extends State<DashboardScreen>
           child: Row(
             children: [
               Icon(Icons.check_circle_rounded, color: riskColor, size: 12),
-              const SizedBox(width: 14),
-              Text('${(data.aiConfidence * 100).toInt()}% VERIFIED BY VERITAS',
-                  style: GoogleFonts.orbitron(fontSize: 20, fontWeight: FontWeight.bold, color: riskColor)),
+              const SizedBox(width: 10),
+              Text(isMobile ? '${(data.aiConfidence * 100).toInt()}% VERIFIED' : '${(data.aiConfidence * 100).toInt()}% VERIFIED BY VERITAS',
+                  style: GoogleFonts.orbitron(fontSize: isMobile ? 9 : 20, fontWeight: FontWeight.bold, color: riskColor)),
             ],
           ),
         ),
@@ -608,10 +630,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                 const SizedBox(height: 12),
                 Text(
                   isCritical ? '🚨 CRITICAL IN ${prediction.timeToCritical} min — HIGH ALERT' : '🟢 Conditions stable — no imminent threat detected',
-                  style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
+                  style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 20, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
                 ),
-                const SizedBox(height: 18),
-                Text(prediction.forecastMessage, style: GoogleFonts.poppins(fontSize: 17, color: const Color(0xFF64748B))),
+                const SizedBox(height: 12),
+                Text(prediction.forecastMessage, style: GoogleFonts.poppins(fontSize: isMobile ? 12 : 17, color: const Color(0xFF64748B))),
               ],
             ),
           ),
@@ -780,14 +802,21 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ]),
           const SizedBox(height: 18),
-          Row(
+          Flex(
+            direction: MediaQuery.of(context).size.width < 600 ? Axis.vertical : Axis.horizontal,
             children: _topRisks.asMap().entries.map((e) {
               final rank = e.key + 1;
               final p = e.value;
               final color = _riskColor(p.risk);
+              final isMobile = MediaQuery.of(context).size.width < 600;
               return Expanded(
+                flex: isMobile ? 0 : 1,
                 child: Container(
-                  margin: EdgeInsets.only(right: e.key < 2 ? 10 : 0),
+                  width: double.infinity,
+                  margin: EdgeInsets.only(
+                    right: (!isMobile && e.key < 2) ? 10 : 0,
+                    bottom: (isMobile && e.key < 2) ? 10 : 0,
+                  ),
                   padding: const EdgeInsets.all(22),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.06),
@@ -801,13 +830,13 @@ class _DashboardScreenState extends State<DashboardScreen>
                         Container(
                           width: 30, height: 30,
                           decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
-                          child: Center(child: Text('#$rank', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white))),
+                          child: Center(child: Text('#$rank', style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white))),
                         ),
                         const SizedBox(width: 14),
-                        Expanded(child: Text(p.location, style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)), overflow: TextOverflow.ellipsis)),
+                        Expanded(child: Text(p.location, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)), overflow: TextOverflow.ellipsis)),
                       ]),
-                      const SizedBox(height: 18),
-                      Text(p.risk.name.toUpperCase(), style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w900, color: color)),
+                      const SizedBox(height: 12),
+                      Text(p.risk.name.toUpperCase(), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w900, color: color)),
                     ],
                   ),
                 ).animate(delay: (rank * 80).ms).fadeIn().slideX(begin: 0.1),

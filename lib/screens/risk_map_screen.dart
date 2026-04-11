@@ -66,6 +66,8 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
   // Pulse animation
   late AnimationController _pulseCtrl;
 
+  bool get _isMobile => MediaQuery.of(context).size.width < 800;
+
   @override
   void initState() {
     super.initState();
@@ -257,101 +259,117 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
   // ─── MISSION CONTROL BAR ──────────────────────────────────────────────────
   Widget _buildMissionControlBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: _isMobile ? 12 : 12),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [BoxShadow(color: const Color(0xFF0EA5E9).withValues(alpha: 0.07), blurRadius: 12, offset: const Offset(0, 2))],
         border: Border(bottom: BorderSide(color: const Color(0xFFE2E8F0))),
       ),
-      child: Row(
+      child: Column(
         children: [
-          if (!widget.isTab)
-            IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF475569), size: 16),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-          if (!widget.isTab) const SizedBox(width: 12),
-
-          // Logo + Title
-          Container(
-            width: 32, height: 32,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)]),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.hub, color: Colors.white, size: 16),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('PlanetShield360', style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A), letterSpacing: 0.5)),
-              Text('AI Command Dashboard', style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF64748B))),
-            ],
-          ),
-          const Spacer(),
-
-          // Selected location indicator
-          if (_intelLocation.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: _riskColor(_intelRisk).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _riskColor(_intelRisk).withValues(alpha: 0.4)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.location_on, color: _riskColor(_intelRisk), size: 12),
-                  const SizedBox(width: 4),
-                  Text(_intelLocation.toUpperCase(), style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: _riskColor(_intelRisk))),
-                ],
-              ),
-            ).animate().fadeIn(),
-
-          const SizedBox(width: 12),
-
-          // LIVE indicator
           Row(
             children: [
-              AnimatedBuilder(
-                animation: _pulseCtrl,
-                builder: (_, __) => Container(
-                  width: 8, height: 8,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.6 + 0.4 * _pulseCtrl.value),
-                    shape: BoxShape.circle,
-                  ),
+              if (!widget.isTab)
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF475569), size: 16),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
+              if (!widget.isTab) const SizedBox(width: 12),
+
+              // Logo + Title
+              Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF0EA5E9), Color(0xFF6366F1)]),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.hub, color: Colors.white, size: 16),
               ),
-              const SizedBox(width: 6),
-              Text('LIVE', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('PlanetShield360', style: GoogleFonts.orbitron(fontSize: _isMobile ? 12 : 11, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A), letterSpacing: 0.5)),
+                  Text('AI Command Dashboard', style: GoogleFonts.poppins(fontSize: _isMobile ? 9 : 9, color: const Color(0xFF64748B))),
+                ],
+              ),
+              const Spacer(),
+              if (!_isMobile) ..._buildMissionStatusBadges(),
             ],
           ),
-
-          const SizedBox(width: 12),
-
-          // Demo Mode toggle
-          GestureDetector(
-            onTap: () => setState(() => OracleService.demoMode = !OracleService.demoMode),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: OracleService.demoMode ? const Color(0xFFEF4444) : const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                OracleService.demoMode ? '⚡ DEMO ON' : '⚡ DEMO',
-                style: GoogleFonts.orbitron(fontSize: 8, fontWeight: FontWeight.bold, color: OracleService.demoMode ? Colors.white : const Color(0xFF475569)),
-              ),
+          if (_isMobile) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: _buildMissionStatusBadges(),
             ),
-          ),
+          ],
         ],
       ),
     );
+  }
+
+  List<Widget> _buildMissionStatusBadges() {
+    return [
+      // Selected location indicator
+      if (_intelLocation.isNotEmpty)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: _riskColor(_intelRisk).withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _riskColor(_intelRisk).withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.location_on, color: _riskColor(_intelRisk), size: 12),
+              const SizedBox(width: 4),
+              Text(_intelLocation.toUpperCase(), style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: _riskColor(_intelRisk))),
+            ],
+          ),
+        ).animate().fadeIn(),
+
+      const SizedBox(width: 12),
+
+      // LIVE indicator
+      Row(
+        children: [
+          AnimatedBuilder(
+            animation: _pulseCtrl,
+            builder: (_, __) => Container(
+              width: 8, height: 8,
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.6 + 0.4 * _pulseCtrl.value),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text('LIVE', style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
+        ],
+      ),
+
+      const SizedBox(width: 12),
+
+      // Demo Mode toggle
+      GestureDetector(
+        onTap: () => setState(() => OracleService.demoMode = !OracleService.demoMode),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: OracleService.demoMode ? const Color(0xFFEF4444) : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            OracleService.demoMode ? '⚡ DEMO ON' : '⚡ DEMO',
+            style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: OracleService.demoMode ? Colors.white : const Color(0xFF475569)),
+          ),
+        ),
+      ),
+    ];
   }
 
   // ─── ALERT BANNER ─────────────────────────────────────────────────────────
@@ -375,9 +393,9 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('[PROACTIVE AI ALERT — ORACLE + PRIORITY]',
-                    style: GoogleFonts.orbitron(color: Colors.white70, fontSize: 7, letterSpacing: 1)),
+                    style: GoogleFonts.orbitron(color: Colors.white70, fontSize: _isMobile ? 8 : 7, letterSpacing: 1)),
                 Text(_activeAlert!.message,
-                    style: GoogleFonts.poppins(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                    style: GoogleFonts.poppins(color: Colors.white, fontSize: _isMobile ? 12 : 11, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -388,7 +406,7 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text('ACTION PLAN', style: GoogleFonts.orbitron(fontSize: 7, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
+            child: Text('ACTION PLAN', style: GoogleFonts.orbitron(fontSize: _isMobile ? 8 : 7, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
           ),
           const SizedBox(width: 4),
           GestureDetector(
@@ -489,13 +507,13 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
                         Icon(
                           tabs[i].$1,
                           color: selected ? const Color(0xFF0EA5E9) : const Color(0xFFCBD5E1),
-                          size: 18,
+                          size: 22,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 4),
                         Text(
                           tabs[i].$2,
                           style: GoogleFonts.orbitron(
-                            fontSize: 7,
+                            fontSize: 10,
                             fontWeight: FontWeight.bold,
                             color: selected ? const Color(0xFF0EA5E9) : const Color(0xFFCBD5E1),
                           ),
@@ -695,8 +713,8 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('${(value * 100).toInt()}%', style: GoogleFonts.orbitron(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
-                    Text('RISK', style: GoogleFonts.orbitron(fontSize: 8, color: const Color(0xFF94A3B8))),
+                    Text('${(value * 100).toInt()}%', style: GoogleFonts.orbitron(fontSize: _isMobile ? 22 : 18, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                    Text('RISK', style: GoogleFonts.orbitron(fontSize: _isMobile ? 10 : 8, color: const Color(0xFF94A3B8))),
                   ],
                 ),
               ),
@@ -715,8 +733,8 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF64748B))),
-            Text(value.toStringAsFixed(1), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+            Text(label, style: GoogleFonts.poppins(fontSize: _isMobile ? 12 : 10, color: const Color(0xFF64748B))),
+            Text(value.toStringAsFixed(1), style: GoogleFonts.poppins(fontSize: _isMobile ? 12 : 10, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
           ],
         ),
         const SizedBox(height: 4),

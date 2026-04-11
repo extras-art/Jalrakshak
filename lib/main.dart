@@ -1,5 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:planetshield360/screens/intro_screen.dart';
 
 import 'firebase_options.dart';
@@ -14,5 +14,19 @@ Future<void> main() async {
   // Initialize the SENTINEL Continuous Sync Engine
   BackgroundSyncService().startSync();
 
-  runApp(const PlanetShieldApp());
+  runApp(
+    MaterialApp(
+      title: 'PlanetShield360 (1.3)',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF8FAFF),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF3B82F6),
+          surface: Colors.white,
+        ),
+      ),
+      home: const IntroScreen(),
+    ),
+  );
 }

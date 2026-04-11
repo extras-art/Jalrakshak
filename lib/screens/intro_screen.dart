@@ -1,902 +1,540 @@
-import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:planetshield360/screens/home_screen.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'home_screen.dart';
 
-
-class PlanetShieldApp extends StatelessWidget {
-  const PlanetShieldApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'PlanetShield360',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: PS.bg,
-        colorScheme: const ColorScheme.light(
-          primary: PS.accent,
-          surface: PS.surface,
-        ),
-      ),
-      home: const IntroScreen(),
-    );
-  }
-}
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-class PS {
-  // Backgrounds
-  static const bg       = Color(0xFFF5F9F7);
-  static const surface  = Color(0xFFFFFFFF);
-  static const surface2 = Color(0xFFF0F7F4);
-
-  // Accent colours
-  static const accent      = Color(0xFF2A9467);
-  static const accentMid   = Color(0xFF36B07C);
-  static const accentLight = Color(0xFFD4EFE4);
-  static const blue        = Color(0xFF3572C6);
-  static const blueLight   = Color(0xFFD5E5F9);
-  static const teal        = Color(0xFF1EA8BC);
-  static const tealLight   = Color(0xFFCDF1F6);
-  static const amber       = Color(0xFFD4900A);
-  static const amberLight  = Color(0xFFFEEDD0);
-  static const rose        = Color(0xFFD04F5F);
-  static const roseLight   = Color(0xFFFADEE2);
-
-  // Text
-  static const textPri = Color(0xFF182820);
-  static const textSec = Color(0xFF587060);
-  static const textTer = Color(0xFF9DBDAE);
-
-  // Borders
-  static const border    = Color(0xFFDEECE5);
-  static const borderMid = Color(0xFFC8DDD5);
-}
-
-// ─── Intro Screen ─────────────────────────────────────────────────────────────
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
+
   @override
   State<IntroScreen> createState() => _IntroScreenState();
 }
 
 class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin {
-  late AnimationController _fadeCtrl;
-  late AnimationController _pulseCtrl;
-  late AnimationController _radarCtrl;
+  late ScrollController _scrollController;
+  late AnimationController _pulseController;
+  late AnimationController _rotateController;
 
-  late Animation<double> _fade;
-  late Animation<Offset> _slide;
-  late Animation<double> _pulse;
-  late Animation<double> _radar;
-
-  int _activePipe  = -1;
-  int _activeAgent = -1;
-  Timer? _pipeTimer;
-
-  static const _pipe = [
-    ('Data In',  'Ingest'),
-    ('Sentinel', 'Detect'),
-    ('Cortex',   'Decide'),
-    ('Probe',    'Investigate'),
-    ('Veritas',  'Verify'),
-    ('Oracle',   'Predict'),
-    ('Scribe',   'Report'),
-    ('Meridian', 'Improve'),
-  ];
-
-  static const _agents = [
-    _AgentData('CX', 'Cortex',   'Boss brain',      'Orchestrates agents & prioritises risk zones',    PS.accent,    PS.accentLight),
-    _AgentData('SN', 'Sentinel', 'Anomaly watcher', 'Detects unusual signals across data streams',     PS.teal,      PS.tealLight),
-    _AgentData('PB', 'Probe',    'Investigator',    'Deep-dives into root cause of anomalies',         PS.blue,      PS.blueLight),
-    _AgentData('VR', 'Veritas',  'Fact checker',    'Confirms signals are real — not sensor noise',    PS.accentMid, PS.accentLight),
-    _AgentData('OR', 'Oracle',   'Predictor',       '30 / 90 / 180-day risk forecasts with confidence',PS.rose,      PS.roseLight),
-    _AgentData('SC', 'Scribe',   'Reporter',        'Converts AI output into government briefs',       PS.blue,      PS.blueLight),
-    _AgentData('MR', 'Meridian', 'Improver',        'Learns from outcomes to sharpen accuracy weekly', PS.amber,     PS.amberLight),
-  ];
+  bool get _isMobile => MediaQuery.of(context).size.width < 800;
 
   @override
   void initState() {
     super.initState();
-    _fadeCtrl  = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
-    _pulseCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800))
-      ..repeat(reverse: true);
-    _radarCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 3000))
-      ..repeat();
-
-    _fade  = CurvedAnimation(parent: _fadeCtrl,  curve: Curves.easeOut);
-    _slide = Tween<Offset>(begin: const Offset(0, 0.025), end: Offset.zero)
-        .animate(CurvedAnimation(parent: _fadeCtrl, curve: Curves.easeOut));
-    _pulse = CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut);
-    _radar = CurvedAnimation(parent: _radarCtrl, curve: Curves.linear);
-
-    _fadeCtrl.forward();
-    _runPipe();
-  }
-
-  void _runPipe() {
-    int step = 0;
-    _pipeTimer = Timer.periodic(const Duration(milliseconds: 520), (t) {
-      if (!mounted) { t.cancel(); return; }
-      setState(() => _activePipe = step++);
-      if (step >= _pipe.length) {
-        t.cancel();
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) { setState(() => _activePipe = -1); _runPipe(); }
-        });
-      }
-    });
+    _scrollController = ScrollController();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _rotateController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 20),
+    )..repeat();
   }
 
   @override
   void dispose() {
-    _fadeCtrl.dispose();
-    _pulseCtrl.dispose();
-    _radarCtrl.dispose();
-    _pipeTimer?.cancel();
+    _scrollController.dispose();
+    _pulseController.dispose();
+    _rotateController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: PS.bg,
-      body: FadeTransition(
-        opacity: _fade,
-        child: SlideTransition(
-          position: _slide,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _NavRail(pulse: _pulse),
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _TopBar(pulse: _pulse),
-                      _HeroSection(pulse: _pulse, radar: _radar),
-                      _StatsRow(),
-                      _sectionDivider(),
-                      _PipelineSection(activePipe: _activePipe),
-                      _sectionDivider(),
-                      _AgentsSection(
-                        activeAgent: _activeAgent,
-                        onTap: (i) => setState(() =>
-                        _activeAgent = _activeAgent == i ? -1 : i),
-                      ),
-                      _sectionDivider(),
-                      _AlertFeedSection(pulse: _pulse),
-                      _FooterBar(),
-                    ],
+      backgroundColor: const Color(0xFFF8FAFF),
+      body: Stack(
+        children: [
+          // Background subtle texture
+          _buildBackground(),
+          
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              _buildHeroSection(),
+              _buildUSPGridSection(),
+              _buildAgentNeuralSection(),
+              _buildInnovationSection(),
+              _buildFooter(),
+            ],
+          ),
+
+          // Enter Dashboard Bottom Bar
+          _buildEnterCTA(),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // BACKGROUND
+  // ─────────────────────────────────────────────────────────────────────────────
+  Widget _buildBackground() {
+    return Positioned.fill(
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF0F7FF), Color(0xFFFFFFFF)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Opacity(
+          opacity: 0.03,
+          child: CustomPaint(painter: _GridPainter()),
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // HERO SECTION
+  // ─────────────────────────────────────────────────────────────────────────────
+  Widget _buildHeroSection() {
+    return SliverToBoxAdapter(
+      child: Container(
+        height: MediaQuery.of(context).size.height,
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Floating Core
+            AnimatedBuilder(
+              animation: _rotateController,
+              builder: (context, child) => Transform.rotate(
+                angle: _rotateController.value * 2 * math.pi,
+                child: SizedBox(
+                  width: _isMobile ? 160 : 240,
+                  height: _isMobile ? 160 : 240,
+                  child: CustomPaint(
+                    painter: _AegisCorePainter(pulse: _pulseController.value),
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+            ).animate()
+             .scale(duration: 1200.ms, curve: Curves.elasticOut)
+             .fadeIn(duration: 800.ms),
 
-  Widget _sectionDivider() => Container(
-    height: 0.5,
-    color: PS.border,
-    margin: const EdgeInsets.symmetric(horizontal: 48),
-  );
-}
+            SizedBox(height: _isMobile ? 40 : 60),
 
-// ─── Nav Rail ─────────────────────────────────────────────────────────────────
-class _NavRail extends StatelessWidget {
-  final Animation<double> pulse;
-  const _NavRail({required this.pulse});
+            // Text content
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.2)),
+                  ),
+                  child: Text(
+                    'PLANETSHIELD360 GENESIS',
+                    style: GoogleFonts.orbitron(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF3B82F6),
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ).animate().slideY(begin: 0.2, duration: 600.ms).fadeIn(),
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 60,
-      decoration: const BoxDecoration(
-        color: PS.surface,
-        border: Border(right: BorderSide(color: PS.border, width: 0.5)),
-      ),
-      child: Column(children: [
-        const SizedBox(height: 18),
-        Container(
-          width: 34, height: 34,
-          decoration: BoxDecoration(
-            color: PS.accentLight,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: PS.accent.withValues(alpha: 0.25), width: 0.5),
-          ),
-          child: const Center(
-            child: Text('PS', style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w700, color: PS.accent)),
-          ),
-        ),
-        const SizedBox(height: 28),
-        _NIcon(Icons.radar_outlined,        'Live',    true),
-        _NIcon(Icons.account_tree_outlined, 'Agents',  false),
-        _NIcon(Icons.map_outlined,          'Map',     false),
-        _NIcon(Icons.bar_chart_outlined,    'Reports', false),
-        _NIcon(Icons.settings_outlined,     'Settings',false),
-        const Spacer(),
-        _NIcon(Icons.person_outline,        'User',    false),
-        const SizedBox(height: 18),
-      ]),
-    );
-  }
-}
+                const SizedBox(height: 24),
+                
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: 'THE WORLD\'S MOST ADVANCED\n',
+                        style: GoogleFonts.orbitron(
+                          fontSize: _isMobile ? 10 : 14,
+                          fontWeight: FontWeight.w300,
+                          color: const Color(0xFF64748B),
+                          letterSpacing: _isMobile ? 2 : 4,
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'INTELLIGENCE AEGIS',
+                        style: GoogleFonts.orbitron(
+                          fontSize: _isMobile ? 32 : 56,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF0F172A),
+                          letterSpacing: _isMobile ? -1 : -2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ).animate().slideY(begin: 0.1, duration: 800.ms, delay: 200.ms).fadeIn(),
 
-class _NIcon extends StatefulWidget {
-  final IconData icon; final String tip; final bool active;
-  const _NIcon(this.icon, this.tip, this.active);
-  @override State<_NIcon> createState() => _NIconState();
-}
-class _NIconState extends State<_NIcon> {
-  bool _h = false;
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _h = true),
-      onExit:  (_) => setState(() => _h = false),
-      child: Tooltip(
-        message: widget.tip,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          width: 44, height: 44,
-          margin: const EdgeInsets.symmetric(vertical: 2),
-          decoration: BoxDecoration(
-            color: widget.active
-                ? PS.accentLight
-                : (_h ? PS.surface2 : Colors.transparent),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(widget.icon, size: 17,
-              color: widget.active ? PS.accent : PS.textTer),
-        ),
-      ),
-    );
-  }
-}
+                const SizedBox(height: 24),
 
-// ─── Top Bar ──────────────────────────────────────────────────────────────────
-class _TopBar extends StatelessWidget {
-  final Animation<double> pulse;
-  const _TopBar({required this.pulse});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 36),
-      decoration: const BoxDecoration(
-        color: PS.surface,
-        border: Border(bottom: BorderSide(color: PS.border, width: 0.5)),
-      ),
-      child: Row(children: [
-        AnimatedBuilder(
-          animation: pulse,
-          builder: (_, __) => Container(
-            width: 7, height: 7,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: PS.accent.withValues(alpha: 0.4 + pulse.value * 0.6),
+                SizedBox(
+                  width: _isMobile ? double.infinity : 600,
+                  child: Text(
+                    'Autonomous multi-agent synthesis protecting millions. Real-time prediction, proactive intervention, and citizen-verified truth in unified defense.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: _isMobile ? 13 : 16,
+                      color: const Color(0xFF475569),
+                      height: 1.6,
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.1),
+              ],
             ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        const Text('LIVE MONITORING ACTIVE',
-            style: TextStyle(fontSize: 10, letterSpacing: 1.4,
-                fontWeight: FontWeight.w600, color: PS.accent)),
-        const Spacer(),
-        _Chip('7 agents',       PS.accent, PS.accentLight),
-        const SizedBox(width: 6),
-        _Chip('6 data sources', PS.blue,   PS.blueLight),
-        const SizedBox(width: 6),
-        _Chip('3 alerts',       PS.amber,  PS.amberLight),
-      ]),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  final String text; final Color fg; final Color bg;
-  const _Chip(this.text, this.fg, this.bg);
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Text(text, style: TextStyle(
-          fontSize: 11, fontWeight: FontWeight.w500, color: fg)),
-    );
-  }
-}
-
-// ─── Hero ─────────────────────────────────────────────────────────────────────
-class _HeroSection extends StatelessWidget {
-  final Animation<double> pulse;
-  final Animation<double> radar;
-  const _HeroSection({required this.pulse, required this.radar});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: PS.surface,
-      padding: const EdgeInsets.fromLTRB(56, 52, 56, 44),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-        // Text side
-        Expanded(flex: 6, child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: PS.accentLight,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Text('STRATUM MULTI-AGENT SYSTEM',
-                  style: TextStyle(fontSize: 10, letterSpacing: 1.4,
-                      fontWeight: FontWeight.w600, color: PS.accent)),
-            ),
-            const SizedBox(height: 22),
-            RichText(text: const TextSpan(children: [
-              TextSpan(text: 'Planet',
-                  style: TextStyle(fontSize: 50, fontWeight: FontWeight.w300,
-                      color: PS.textPri, letterSpacing: -1.5, height: 1.1)),
-              TextSpan(text: 'Shield',
-                  style: TextStyle(fontSize: 50, fontWeight: FontWeight.w700,
-                      color: PS.accent, letterSpacing: -1.5, height: 1.1)),
-              TextSpan(text: '360 (Version 2.3)',
-                  style: TextStyle(fontSize: 50, fontWeight: FontWeight.w300,
-                      color: PS.textSec, letterSpacing: -1.5, height: 1.1)),
-            ])),
-            const SizedBox(height: 16),
-            const SizedBox(width: 460, child: Text(
-              'A multi-agent AI system that listens to Earth\'s early warning signals — '
-                  'detecting, predicting, and reporting disasters before they strike.',
-              style: TextStyle(fontSize: 15, color: PS.textSec,
-                  height: 1.75, fontWeight: FontWeight.w300),
-            )),
-            const SizedBox(height: 32),
-            Row(children: [
-              _HeroBtn(
-                'Explore System',
-                primary: true,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const HomeScreen()),
-                ),
-              ),
-              const SizedBox(width: 10),
-              _HeroBtn('Live Alerts', primary: false),
-            ]),
+            
+            const SizedBox(height: 80),
+            
+            // Scroll indicator
+            Icon(Icons.keyboard_arrow_down, color: const Color(0xFF3B82F6).withValues(alpha: 0.5), size: 32)
+                .animate(onPlay: (c) => c.repeat())
+                .move(begin: const Offset(0,-10), end: const Offset(0, 10), duration: 1.2.seconds, curve: Curves.easeInOut),
           ],
-        )),
-        const SizedBox(width: 32),
-        // Radar side
-        Expanded(flex: 4, child: Center(
-          child: _RadarWidget(pulse: pulse, radar: radar),
-        )),
-      ]),
+        ),
+      ),
     );
   }
-}
 
-class _HeroBtn extends StatefulWidget {
-  final String label;
-  final bool primary;
-  final VoidCallback? onTap;
-  const _HeroBtn(this.label, {required this.primary, this.onTap});
-  @override
-  State<_HeroBtn> createState() => _HeroBtnState();
-}
-class _HeroBtnState extends State<_HeroBtn> {
-  bool _h = false;
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _h = true),
-      onExit:  (_) => setState(() => _h = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
-          decoration: BoxDecoration(
-            color: widget.primary
-                ? (_h ? PS.accentMid : PS.accent)
-                : (_h ? PS.surface2 : Colors.transparent),
-            borderRadius: BorderRadius.circular(8),
-            border: widget.primary
-                ? null
-                : Border.all(color: PS.borderMid, width: 0.5),
+  // ─────────────────────────────────────────────────────────────────────────────
+  // USP HUB MATRIX (The 10 Features)
+  // ─────────────────────────────────────────────────────────────────────────────
+  Widget _buildUSPGridSection() {
+    final features = [
+      ('IMPACT PREDICTOR', 'Predicts disaster chain reactions across Mumbai zones.', Icons.hub_rounded, const Color(0xFF3B82F6)),
+      ('INTERVENTION SIM', 'Auto-suggests preventive actions before crisis hits.', Icons.smart_toy_rounded, const Color(0xFFF59E0B)),
+      ('SAFE ROUTE GEN', 'Generates AI-verified life-saving navigation paths.', Icons.navigation_rounded, const Color(0xFF10B981)),
+      ('EFFECT SIMULATOR', 'Visualizes outcomes of critical policy decisions.', Icons.bar_chart_rounded, const Color(0xFF06B6D4)),
+      ('SMART MASS ALERT', 'Targeted hyper-local alerts for citizen safety.', Icons.campaign_rounded, const Color(0xFFEF4444)),
+      ('ROOT CAUSE AI', 'Deep-dives into telemetry to find the core anomaly.', Icons.search_rounded, const Color(0xFF8B5CF6)),
+      ('RISK TIMELINE', 'Visualizes future risk trajectories in real-time.', Icons.timeline_rounded, const Color(0xFF0EA5E9)),
+      ('CROWD RISK', 'Analyzes population patterns (e.g. Kurla, BKC).', Icons.groups_rounded, const Color(0xFFF472B6)),
+      ('RESOURCE OPTIMIZER', 'Precision allocation of pumps, meds, and evac teams.', Icons.inventory_2_rounded, const Color(0xFF14B8A6)),
+      ('SELF-CORRECTING AI', 'MERIDIAN learning engine improves accuracy daily.', Icons.auto_fix_high_rounded, const Color(0xFF6366F1)),
+    ];
+
+    return SliverToBoxAdapter(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 100),
+        child: Column(
+          children: [
+            _sectionHeader('THE AEGIS ENGINES', '10 specialized AI models working in consensus'),
+            const SizedBox(height: 60),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: _isMobile ? 1 : 2,
+                childAspectRatio: _isMobile ? 3.0 : 2.8,
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+              ),
+              itemCount: features.length,
+              itemBuilder: (context, index) {
+                final f = features[index];
+                return _buildUSPCard(f.$1, f.$2, f.$3, f.$4)
+                    .animate()
+                    .fadeIn(delay: (index * 100).ms)
+                    .slideX(begin: index.isEven ? -0.1 : 0.1);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUSPCard(String title, String desc, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
-          child: Text(widget.label, style: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.w500,
-            color: widget.primary ? Colors.white : PS.textSec,
-          )),
+        ],
+        border: Border.all(color: color.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.orbitron(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  desc,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: const Color(0xFF64748B),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // AGENT NEURAL SECTION
+  // ─────────────────────────────────────────────────────────────────────────────
+  Widget _buildAgentNeuralSection() {
+    return SliverToBoxAdapter(
+      child: Container(
+        height: 800,
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          children: [
+            _sectionHeader('THE STRATUM NETWORK', '7 Collaborative Autonomous Agents'),
+            const SizedBox(height: 80),
+            Expanded(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Central hub
+                  _buildAgentNode('CX', 'CORTEX', 'The Controller', const Color(0xFF0F172A), _isMobile ? 80 : 100),
+                  
+                  // Satellite agents
+                  _buildSatelliteNode('SN', 'SENTINEL', 'Watchman', const Color(0xFF10B981), _isMobile ? 110 : 200, 0),
+                  _buildSatelliteNode('PB', 'PROBE', 'Investigator', const Color(0xFF3B82F6), _isMobile ? 120 : 220, 1.2),
+                  _buildSatelliteNode('VR', 'VERITAS', 'Truth-Finder', const Color(0xFF38BDF8), _isMobile ? 130 : 240, 2.4),
+                  _buildSatelliteNode('OR', 'ORACLE', 'Predictor', const Color(0xFF8B5CF6), _isMobile ? 110 : 200, 3.6),
+                  _buildSatelliteNode('SC', 'SCRIBE', 'Reporter', const Color(0xFFF59E0B), _isMobile ? 120 : 220, 4.8),
+                  _buildSatelliteNode('MR', 'MERIDIAN', 'Optimizer', const Color(0xFFF472B6), _isMobile ? 130 : 240, 5.8),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAgentNode(String init, String name, String tag, Color color, double size) {
+    return Container(
+      width: size, height: size,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 40)],
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 2),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(init, style: GoogleFonts.orbitron(fontSize: size * 0.25, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(name, style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.7))),
+          Text(tag, style: GoogleFonts.poppins(fontSize: 8, color: Colors.white.withValues(alpha: 0.5))),
+        ],
+      ),
+    ).animate().scale(delay: 500.ms).fadeIn();
+  }
+
+  Widget _buildSatelliteNode(String init, String name, String tag, Color color, double radius, double angleOffset) {
+    return AnimatedBuilder(
+      animation: _rotateController,
+      builder: (context, child) {
+        final angle = (_rotateController.value * 2 * math.pi) * 0.5 + angleOffset;
+        final x = math.cos(angle) * radius;
+        final y = math.sin(angle) * radius * 0.6; // Oval orbit
+        return Transform.translate(
+          offset: Offset(x, y),
+          child: _buildAgentNode(init, name, tag, color, _isMobile ? 55 : 70),
+        );
+      },
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // INNOVATION SECTION
+  // ─────────────────────────────────────────────────────────────────────────
+  Widget _buildInnovationSection() {
+    return SliverToBoxAdapter(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 120),
+        child: Column(
+          children: [
+            _sectionHeader('MISSION INTEGRITY', 'Ground truth verified by AI and Citizens'),
+            const SizedBox(height: 60),
+            Flex(
+              direction: _isMobile ? Axis.vertical : Axis.horizontal,
+              children: [
+                Expanded(flex: _isMobile ? 0 : 1, child: _buildInfoCard('94%', 'ACCURACY', 'AI Sentinel prediction precision in Mumbai monsoon environments.')),
+                SizedBox(width: _isMobile ? 0 : 20, height: _isMobile ? 20 : 0),
+                Expanded(flex: _isMobile ? 0 : 1, child: _buildInfoCard('±15m', 'GRANULARITY', 'Precision sensing across high-density risk zones.')),
+                SizedBox(width: _isMobile ? 0 : 20, height: _isMobile ? 20 : 0),
+                Expanded(flex: _isMobile ? 0 : 1, child: _buildInfoCard('0.8s', 'LATENCY', 'Real-time consensus between 7 autonomous agents.')),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String val, String label, String desc) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        children: [
+          Text(val, style: GoogleFonts.orbitron(fontSize: 42, fontWeight: FontWeight.w900, color: const Color(0xFF3B82F6))),
+          Text(label, style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF64748B), letterSpacing: 2)),
+          const SizedBox(height: 16),
+          Text(desc, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF94A3B8))),
+        ],
+      ),
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // UTILS
+  // ─────────────────────────────────────────────────────────────────────────
+  Widget _sectionHeader(String title, String sub) {
+    return Column(
+      children: [
+        Text(title, style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF3B82F6), letterSpacing: 4)),
+        const SizedBox(height: 12),
+        Text(sub, style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+        Container(margin: const EdgeInsets.only(top: 16), width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF3B82F6), borderRadius: BorderRadius.circular(2))),
+      ],
+    ).animate().fadeIn().slideY(begin: 0.1);
+  }
+
+  Widget _buildFooter() {
+    return SliverToBoxAdapter(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 100),
+        child: Column(
+          children: [
+            Text('PLANETSHIELD360', style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFFCBD5E1))),
+            const SizedBox(height: 10),
+            Text('Advanced Multi-Agent Disaster Defense Framework', style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF94A3B8))),
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnterCTA() {
+    return Positioned(
+      bottom: 40,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: SizedBox(
+          width: 300,
+          child: ElevatedButton(
+            onPressed: () => Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0F172A),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              elevation: 20,
+              shadowColor: const Color(0xFF0F172A).withValues(alpha: 0.4),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('ENGAGE MISSION CONTROL', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                const SizedBox(width: 12),
+                const Icon(Icons.arrow_forward_rounded, size: 18),
+              ],
+            ),
+          ).animate(onPlay: (c) => c.repeat(reverse: true))
+           .shimmer(duration: 2.seconds, color: Colors.white.withValues(alpha: 0.1))
+           .scale(begin: const Offset(1,1), end: const Offset(1.05, 1.05), duration: 2.seconds, curve: Curves.easeInOut),
         ),
       ),
     );
   }
 }
 
-// ─── Radar Painter ────────────────────────────────────────────────────────────
-class _RadarWidget extends StatelessWidget {
-  final Animation<double> pulse;
-  final Animation<double> radar;
-  const _RadarWidget({required this.pulse, required this.radar});
+// ─────────────────────────────────────────────────────────────────────────────
+// PAINTERS
+// ─────────────────────────────────────────────────────────────────────────────
 
+class _GridPainter extends CustomPainter {
   @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([pulse, radar]),
-      builder: (_, __) => SizedBox(
-        width: 256, height: 256,
-        child: CustomPaint(painter: _RadarPainter(pulse.value, radar.value)),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = const Color(0xFF3B82F6)..strokeWidth = 1;
+    for (double i = 0; i <= size.width; i += 40) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+    for (double i = 0; i <= size.height; i += 40) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
   }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _RadarPainter extends CustomPainter {
-  final double pulse, scan;
-  _RadarPainter(this.pulse, this.scan);
+class _AegisCorePainter extends CustomPainter {
+  final double pulse;
+  _AegisCorePainter({required this.pulse});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final r  = size.width / 2 - 6;
+    final center = Offset(size.width / 2, size.height / 2);
+    final paint = Paint()..style = PaintingStyle.stroke..strokeWidth = 2;
 
-    // Soft background fill
-    canvas.drawCircle(Offset(cx, cy), r,
-        Paint()..color = const Color(0xFFEDF8F3));
+    // Inner core
+    canvas.drawCircle(center, 40 + pulse * 10, Paint()..color = const Color(0xFF3B82F6).withValues(alpha: 0.1 + pulse * 0.1)..style = PaintingStyle.fill);
+    canvas.drawCircle(center, 40, paint..color = const Color(0xFF3B82F6));
 
-    // Concentric rings
-    for (int i = 1; i <= 4; i++) {
-      canvas.drawCircle(Offset(cx, cy), r * i / 4,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 0.5
-            ..color = PS.accent.withValues(alpha: 0.1 + i * 0.04));
+    // Rings
+    for (int i = 1; i <= 3; i++) {
+      final r = 50.0 + (i * 30);
+      canvas.drawCircle(center, r, paint..color = const Color(0xFF3B82F6).withValues(alpha: 0.4 / i));
+      
+      // Orbiting dots
+      final angle = (pulse * 2 * math.pi) + (i * 0.5);
+      canvas.drawCircle(
+        Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle)),
+        4,
+        Paint()..color = const Color(0xFF3B82F6)..style = PaintingStyle.fill,
+      );
     }
-
-    // Crosshair lines
-    final cp = Paint()..color = PS.accent.withValues(alpha: 0.1)..strokeWidth = 0.5;
-    canvas.drawLine(Offset(cx, cy - r), Offset(cx, cy + r), cp);
-    canvas.drawLine(Offset(cx - r, cy), Offset(cx + r, cy), cp);
-
-    // Diagonal guides
-    canvas.drawLine(
-        Offset(cx - r * 0.707, cy - r * 0.707),
-        Offset(cx + r * 0.707, cy + r * 0.707), cp);
-    canvas.drawLine(
-        Offset(cx + r * 0.707, cy - r * 0.707),
-        Offset(cx - r * 0.707, cy + r * 0.707), cp);
-
-    // Sweep arc
-    final angle = scan * 2 * math.pi;
-    final rect  = Rect.fromCircle(center: Offset(cx, cy), radius: r);
-    canvas.drawArc(rect, angle - 1.4, 1.4, true,
-        Paint()..color = PS.accent.withValues(alpha: 0.12));
-
-    // Sweep arm
-    canvas.drawLine(Offset(cx, cy),
-        Offset(cx + r * math.cos(angle), cy + r * math.sin(angle)),
-        Paint()..color = PS.accent.withValues(alpha: 0.5)..strokeWidth = 1.5);
-
-    // Sweep tip dot
-    canvas.drawCircle(
-        Offset(cx + r * math.cos(angle), cy + r * math.sin(angle)), 3,
-        Paint()..color = PS.accent.withValues(alpha: 0.6));
-
-    // Center dot
-    canvas.drawCircle(Offset(cx, cy), 4 + pulse * 2,
-        Paint()..color = PS.accent.withValues(alpha: 0.45 + pulse * 0.35));
-
-    // Blips
-    const blips = [
-      (0.9, 0.35, PS.rose),
-      (2.6, 0.62, PS.amber),
-      (4.4, 0.74, PS.teal),
-    ];
-    for (final (a, d, c) in blips) {
-      final bx = cx + r * d * math.cos(a);
-      final by = cy + r * d * math.sin(a);
-      canvas.drawCircle(Offset(bx, by), 4.5, Paint()..color = c.withValues(alpha: 0.8));
-      canvas.drawCircle(Offset(bx, by), 4.5 + pulse * 7,
-          Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 0.8
-            ..color = c.withValues(alpha: 0.22 - pulse * 0.18));
-    }
-
-    // Outer border
-    canvas.drawCircle(Offset(cx, cy), r,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1
-          ..color = PS.accent.withValues(alpha: 0.18));
+    
+    // Crosshair
+    canvas.drawLine(Offset(center.dx - 120, center.dy), Offset(center.dx + 120, center.dy), paint..color = const Color(0xFF3B82F6).withValues(alpha: 0.1));
+    canvas.drawLine(Offset(center.dx, center.dy - 120), Offset(center.dx, center.dy + 120), paint);
   }
 
   @override
-  bool shouldRepaint(_RadarPainter old) =>
-      old.pulse != pulse || old.scan != scan;
-}
-
-// ─── Stats Row ────────────────────────────────────────────────────────────────
-class _StatsRow extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: PS.surface,
-      padding: const EdgeInsets.fromLTRB(56, 0, 56, 44),
-      child: Container(
-        decoration: BoxDecoration(
-          color: PS.surface2,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: PS.border, width: 0.5),
-        ),
-        child: IntrinsicHeight(
-          child: Row(children: [
-            _StatCell('7',    'AI agents'),
-            _VDiv(),
-            _StatCell('6+',   'Data sources'),
-            _VDiv(),
-            _StatCell('180d', 'Forecast horizon'),
-            _VDiv(),
-            _StatCell('<15m', 'Detection latency'),
-            _VDiv(),
-            _StatCell('99%',  'Uptime SLA'),
-          ]),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatCell extends StatelessWidget {
-  final String value, label;
-  const _StatCell(this.value, this.label);
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(child: Padding(
-      padding: const EdgeInsets.symmetric(vertical: 22),
-      child: Column(children: [
-        Text(value, style: const TextStyle(
-            fontSize: 26, fontWeight: FontWeight.w600,
-            color: PS.textPri, letterSpacing: -0.5)),
-        const SizedBox(height: 3),
-        Text(label, style: const TextStyle(
-            fontSize: 11, color: PS.textSec)),
-      ]),
-    ));
-  }
-}
-
-class _VDiv extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) =>
-      Container(width: 0.5, color: PS.border);
-}
-
-// ─── Pipeline ─────────────────────────────────────────────────────────────────
-class _PipelineSection extends StatelessWidget {
-  final int activePipe;
-  const _PipelineSection({required this.activePipe});
-
-  static const _pipe = _IntroScreenState._pipe;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: PS.bg,
-      padding: const EdgeInsets.fromLTRB(56, 36, 56, 36),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const _SecLabel('Intelligence Pipeline'),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          decoration: BoxDecoration(
-            color: PS.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: PS.border, width: 0.5),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(_pipe.length * 2 - 1, (i) {
-              if (i.isOdd) {
-                return Expanded(child: Container(
-                  height: 0.5,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  color: PS.border,
-                ));
-              }
-              final idx = i ~/ 2;
-              final lit = idx <= activePipe;
-              return _PipeNode(
-                name: _pipe[idx].$1,
-                stage: _pipe[idx].$2,
-                lit: lit,
-              );
-            }),
-          ),
-        ),
-      ]),
-    );
-  }
-}
-
-class _PipeNode extends StatelessWidget {
-  final String name, stage;
-  final bool lit;
-  const _PipeNode({required this.name, required this.stage, required this.lit});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(children: [
-      AnimatedContainer(
-        duration: const Duration(milliseconds: 280),
-        width: 48, height: 48,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: lit ? PS.accentLight : PS.surface2,
-          border: Border.all(
-            color: lit ? PS.accent.withValues(alpha: 0.5) : PS.border,
-            width: lit ? 1.5 : 0.5,
-          ),
-        ),
-        child: Center(child: Text(name,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 8.5, fontWeight: FontWeight.w600,
-              color: lit ? PS.accent : PS.textTer,
-              height: 1.3,
-            ))),
-      ),
-      const SizedBox(height: 6),
-      Text(stage.toUpperCase(), style: TextStyle(
-        fontSize: 8.5, letterSpacing: 0.8, fontWeight: FontWeight.w500,
-        color: lit ? PS.accent : PS.textTer,
-      )),
-    ]);
-  }
-}
-
-// ─── Agents ───────────────────────────────────────────────────────────────────
-class _AgentsSection extends StatelessWidget {
-  final int activeAgent;
-  final void Function(int) onTap;
-  const _AgentsSection({required this.activeAgent, required this.onTap});
-
-  static const _agents = _IntroScreenState._agents;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: PS.surface,
-      padding: const EdgeInsets.fromLTRB(56, 36, 56, 36),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const _SecLabel('The 7 Agents'),
-        const SizedBox(height: 20),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: List.generate(_agents.length, (i) {
-            return Expanded(child: Padding(
-              padding: EdgeInsets.only(right: i < _agents.length - 1 ? 10 : 0),
-              child: _AgentCard(
-                data: _agents[i],
-                active: activeAgent == i,
-                onTap: () => onTap(i),
-              ),
-            ));
-          }),
-        ),
-      ]),
-    );
-  }
-}
-
-class _AgentData {
-  final String init, name, role, desc;
-  final Color accent, light;
-  const _AgentData(this.init, this.name, this.role, this.desc, this.accent, this.light);
-}
-
-class _AgentCard extends StatefulWidget {
-  final _AgentData data;
-  final bool active;
-  final VoidCallback onTap;
-  const _AgentCard({required this.data, required this.active, required this.onTap});
-  @override State<_AgentCard> createState() => _AgentCardState();
-}
-class _AgentCardState extends State<_AgentCard> {
-  bool _h = false;
-  @override
-  Widget build(BuildContext context) {
-    final d = widget.data;
-    return MouseRegion(
-      onEnter: (_) => setState(() => _h = true),
-      onExit:  (_) => setState(() => _h = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: widget.active
-                ? d.light
-                : (_h ? PS.surface2 : PS.surface),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: widget.active ? d.accent.withValues(alpha: 0.35) : PS.border,
-              width: widget.active ? 1 : 0.5,
-            ),
-          ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(
-              width: 32, height: 32,
-              decoration: BoxDecoration(
-                color: d.light,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: d.accent.withValues(alpha: 0.2), width: 0.5),
-              ),
-              child: Center(child: Text(d.init, style: TextStyle(
-                  fontSize: 10, fontWeight: FontWeight.w700, color: d.accent))),
-            ),
-            const SizedBox(height: 10),
-            Text(d.name, style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w600,
-                color: widget.active ? d.accent : PS.textPri)),
-            const SizedBox(height: 2),
-            Text(d.role, style: const TextStyle(
-                fontSize: 10, color: PS.textSec)),
-            const SizedBox(height: 8),
-            Text(d.desc,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                    fontSize: 10, color: PS.textTer, height: 1.5)),
-          ]),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Alert Feed ───────────────────────────────────────────────────────────────
-class _AlertFeedSection extends StatelessWidget {
-  final Animation<double> pulse;
-  const _AlertFeedSection({required this.pulse});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: PS.bg,
-      padding: const EdgeInsets.fromLTRB(56, 36, 56, 36),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const _SecLabel('Live Alert Feed — Mumbai Region'),
-        const SizedBox(height: 16),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(child: _AlertCard(
-            title: 'High flood risk — Dharavi low-lying zone',
-            meta: 'Soil saturation 94% · Sentinel 87% confidence · Oracle: 30d HIGH',
-            accent: PS.rose, bg: PS.roseLight,
-            pulse: pulse, animated: true,
-          )),
-          const SizedBox(width: 12),
-          Expanded(child: _AlertCard(
-            title: 'Bridge stress anomaly — Western Express Hwy',
-            meta: 'Seismic micro-vibration spike · Probe investigating · 90d MEDIUM',
-            accent: PS.amber, bg: PS.amberLight,
-            pulse: pulse, animated: false,
-          )),
-          const SizedBox(width: 12),
-          Expanded(child: _AlertCard(
-            title: 'Air quality degradation — BKC',
-            meta: 'PM2.5 +340% vs baseline · Low disaster probability · Logged',
-            accent: PS.blue, bg: PS.blueLight,
-            pulse: pulse, animated: false,
-          )),
-        ]),
-      ]),
-    );
-  }
-}
-
-class _AlertCard extends StatelessWidget {
-  final String title, meta;
-  final Color accent, bg;
-  final Animation<double> pulse;
-  final bool animated;
-  const _AlertCard({
-    required this.title, required this.meta,
-    required this.accent, required this.bg,
-    required this.pulse, required this.animated,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: pulse,
-      builder: (_, __) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: bg.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: accent.withValues(alpha: 0.2), width: 0.5),
-        ),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            width: 8, height: 8,
-            margin: const EdgeInsets.only(top: 3.5),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: accent.withValues(alpha: 
-                  animated ? 0.4 + pulse.value * 0.6 : 0.75),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w500,
-                  color: accent, height: 1.4)),
-              const SizedBox(height: 5),
-              Text(meta, style: TextStyle(
-                  fontSize: 11, color: accent.withValues(alpha: 0.6), height: 1.45)),
-            ],
-          )),
-        ]),
-      ),
-    );
-  }
-}
-
-// ─── Footer ───────────────────────────────────────────────────────────────────
-class _FooterBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(56, 18, 56, 22),
-      decoration: const BoxDecoration(
-        color: PS.surface,
-        border: Border(top: BorderSide(color: PS.border, width: 0.5)),
-      ),
-      child: Row(children: [
-        RichText(text: const TextSpan(children: [
-          TextSpan(text: 'Planet',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w300, color: PS.textPri)),
-          TextSpan(text: 'Shield',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: PS.accent)),
-          TextSpan(text: '360',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w300, color: PS.textSec)),
-        ])),
-        const SizedBox(width: 16),
-        const Text('STRATUM multi-agent architecture · 7 agents · Planetary early warning',
-            style: TextStyle(fontSize: 11, color: PS.textTer)),
-        const Spacer(),
-        const Text('v1.0.0-alpha',
-            style: TextStyle(fontSize: 11, color: PS.textTer)),
-      ]),
-    );
-  }
-}
-
-// ─── Shared ───────────────────────────────────────────────────────────────────
-class _SecLabel extends StatelessWidget {
-  final String text;
-  const _SecLabel(this.text);
-  @override
-  Widget build(BuildContext context) {
-    return Text(text.toUpperCase(), style: const TextStyle(
-      fontSize: 10, letterSpacing: 1.5,
-      fontWeight: FontWeight.w600, color: PS.textTer,
-    ));
-  }
+  bool shouldRepaint(covariant _AegisCorePainter oldDelegate) => oldDelegate.pulse != pulse;
 }
