@@ -14,22 +14,19 @@ class OllamaService {
   /// Detects the target style based on user query keywords
   static ChatStyle detectStyle(String query) {
     final q = query.toLowerCase();
-    
-    // Emergency Mode: Directive/Decision keywords
-    if (q.contains("evacuate") || q.contains("emergency") || q.contains("immediate") || q.contains("should we") || q.contains("action")) {
+    if (q.contains("evacuate") || q.contains("emergency") || q.contains("immediate") ||
+        q.contains("should we") || q.contains("action") || q.contains("dangerous")) {
       return ChatStyle.emergency;
     }
-    
-    // Simple Mode: Consumer/Safety keywords
-    if (q.contains("safe") || q.contains("okay") || q.contains("go out") || q.contains("school") || q.contains("office")) {
+    if (q.contains("safe") || q.contains("okay") || q.contains("go out") ||
+        q.contains("school") || q.contains("office") || q.contains("travel") ||
+        q.contains("visit") || q.contains("can i")) {
       return ChatStyle.simple;
     }
-
-    // Baseline: Technical/Analyst mode
-    return ChatStyle.technical;
+    return ChatStyle.simple; // Default to simple — best for citizens
   }
 
-  /// Generates a natural language response based on STRATUM agent data and selected style
+  /// Generates a natural, citizen-friendly LLM response
   static Future<String?> generateResponse({
     required String userQuery,
     required String location,
@@ -37,46 +34,47 @@ class OllamaService {
     required String reason,
     required String prediction,
     required double confidence,
-    ChatStyle? style, // Optional: if null, we detect it
+    required String decision,
+    ChatStyle? style,
   }) async {
     final ChatStyle finalStyle = style ?? detectStyle(userQuery);
-    
-    String styleDirective = "";
+
+    String toneInstruction;
     switch (finalStyle) {
       case ChatStyle.simple:
-        styleDirective = "Use very simple language. Avoid jargon. Focus on clear 'Safe' or 'Unsafe' advice for a concerned citizen.";
+        toneInstruction = "Use a calm, friendly tone — like a neighbour giving advice.";
         break;
       case ChatStyle.technical:
-        styleDirective = "Use detailed analytical language. Reference sensor thresholds and tactical data. Sound like a lead engineer briefing headquarters.";
+        toneInstruction = "Use a clear, informative tone — like a knowledgeable local official.";
         break;
       case ChatStyle.emergency:
-        styleDirective = "Use an urgent, alert-based tone. Use short, directive sentences. Focus on immediate survival and evacuation for on-ground responders.";
+        toneInstruction = "Use an urgent but calm tone — like a safety officer giving clear instructions.";
         break;
     }
 
     final String prompt = """
-You are an AI disaster management assistant for the PlanetShield360 platform.
+You are a helpful safety assistant for citizens in Mumbai.
 
-GOAL: Rephrase the provided STRATUM data into a professional response in the [${finalStyle.name.toUpperCase()} style].
+Your job is to answer the person's question in a simple, kind, and easy-to-understand way.
 
-STYLE DIRECTIVE: $styleDirective
+$toneInstruction
 
-CRITICAL INSTRUCTIONS:
-- Do NOT change any facts or numbers.
-- Do NOT hallucinate.
-- Sound like an expert mission analyst.
+IMPORTANT RULES — Follow these strictly:
+- Do NOT use words like "risk level", "prediction", "confidence", "STRATUM", "PROBE", "ORACLE", "VERITAS", or any technical system names
+- Do NOT use bullet points, numbered lists, or structured headings
+- Do NOT say "Based on the data..." or "According to the system..."
+- Write in natural, conversational sentences — like you are talking to a friend or neighbour
+- Keep the response short (2–4 sentences max)
+- Focus on what the person should DO or know for their safety
 
-DATA:
-- Sector: $location
-- Current Risk: $risk
-- Forensic Reasoning: $reason
-- Predictive Projection: $prediction
-- System Confidence: ${(confidence * 100).toInt()}%
+Here is the situation in $location:
+- The area is currently: $decision
+- Why: $reason
+- What may happen next: $prediction
 
-USER'S QUESTION:
-"$userQuery"
+Person's Question: "$userQuery"
 
-Response ([${finalStyle.name.toUpperCase()}]):
+Write a helpful, natural response:
 """;
 
     try {
@@ -88,15 +86,20 @@ Response ([${finalStyle.name.toUpperCase()}]):
           "prompt": prompt,
           "stream": false,
           "options": {
-            "num_predict": 128,
-            "temperature": 0.3,
+            "num_predict": 120,
+            "temperature": 0.4,
           }
         }),
       ).timeout(const Duration(seconds: 3));
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        return decoded['response']?.toString().trim();
+        final text = decoded['response']?.toString().trim();
+        // Sanitize: remove any slipped agent tags just in case
+        return text
+            ?.replaceAll(RegExp(r'\[PROBE\]|\[ORACLE\]|\[VERITAS\]|\[SCRIBE\]|\[STRATUM.*?\]', caseSensitive: false), '')
+            .replaceAll(RegExp(r'risk level|STRATUM|ORACLE|PROBE|VERITAS', caseSensitive: false), '')
+            .trim();
       }
       return null;
     } catch (e) {

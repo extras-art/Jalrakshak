@@ -62,7 +62,7 @@ class ChatOrchestrator {
     );
 
     // 5. LLM Enhancement (Generation Layer)
-    if (payload.intent != ChatIntent.unknown && payload.location != null) {
+    if (payload.location != null) {
       final enhancedText = await OllamaService.generateResponse(
         userQuery: query,
         location: payload.location!.name,
@@ -70,10 +70,11 @@ class ChatOrchestrator {
         reason: reasoning,
         prediction: prediction.forecastMessage,
         confidence: prediction.confidence,
+        decision: baseline.decision ?? "",
         style: style,
       );
 
-      if (enhancedText != null) {
+      if (enhancedText != null && enhancedText.isNotEmpty) {
         return baseline.copyWithText(enhancedText);
       }
     }
