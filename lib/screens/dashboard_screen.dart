@@ -927,10 +927,19 @@ class _AgentRadarPainter extends CustomPainter {
         final angle = (2 * pi * i / n) - pi / 2;
         final x = cx + ringR * cos(angle);
         final y = cy + ringR * sin(angle);
-      if (i == 0) { path.moveTo(x, y); } else { path.lineTo(x, y); }
+        if (i == 0) {
+          path.moveTo(x, y);
+        } else {
+          path.lineTo(x, y);
+        }
       }
       path.close();
-      canvas.drawPath(path, Paint()..color = const Color(0xFFE2E8F0)..style = PaintingStyle.stroke..strokeWidth = 1);
+      canvas.drawPath(
+          path,
+          Paint()
+            ..color = const Color(0xFFE2E8F0)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1);
     }
 
     // Spoke lines
@@ -939,7 +948,9 @@ class _AgentRadarPainter extends CustomPainter {
       canvas.drawLine(
         Offset(cx, cy),
         Offset(cx + r * cos(angle), cy + r * sin(angle)),
-        Paint()..color = const Color(0xFFE2E8F0)..strokeWidth = 1,
+        Paint()
+          ..color = const Color(0xFFE2E8F0)
+          ..strokeWidth = 1,
       );
     }
 
@@ -951,14 +962,29 @@ class _AgentRadarPainter extends CustomPainter {
       final angle = (2 * pi * i / n) - pi / 2;
       final x = cx + r * activity * cos(angle);
       final y = cy + r * activity * sin(angle);
-      if (i == 0) { dataPath.moveTo(x, y); } else { dataPath.lineTo(x, y); }
+      if (i == 0) {
+        dataPath.moveTo(x, y);
+      } else {
+        dataPath.lineTo(x, y);
+      }
     }
     dataPath.close();
 
     // Fill
-    canvas.drawPath(dataPath, Paint()..color = const Color(0xFF0EA5E9).withValues(alpha: 0.1 + 0.05 * dataPulse)..style = PaintingStyle.fill);
+    canvas.drawPath(
+        dataPath,
+        Paint()
+          ..color = const Color(0xFF0EA5E9).withValues(alpha: 0.1 + 0.05 * dataPulse)
+          ..style = PaintingStyle.fill);
     // Stroke
-    canvas.drawPath(dataPath, Paint()..color = const Color(0xFF0EA5E9).withValues(alpha: 0.7)..style = PaintingStyle.stroke..strokeWidth = 2..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round);
+    canvas.drawPath(
+        dataPath,
+        Paint()
+          ..color = const Color(0xFF0EA5E9).withValues(alpha: 0.7)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round);
 
     // Agent dots + labels
     for (var i = 0; i < n; i++) {
@@ -966,15 +992,26 @@ class _AgentRadarPainter extends CustomPainter {
       final angle = (2 * pi * i / n) - pi / 2;
       final dotX = cx + r * activity * cos(angle);
       final dotY = cy + r * activity * sin(angle);
-      final labelX = cx + (r + 14) * cos(angle);
-      final labelY = cy + (r + 14) * sin(angle);
+
+      // Label positioning - dynamic based on radius
+      final labelDist = r * 1.25; // 25% further than outer ring
+      final labelX = cx + labelDist * cos(angle);
+      final labelY = cy + labelDist * sin(angle);
 
       // Dot
-      canvas.drawCircle(Offset(dotX, dotY), 4 + 2 * dataPulse, Paint()..color = agents[i].color..style = PaintingStyle.fill);
+      canvas.drawCircle(Offset(dotX, dotY), 4 + 2 * dataPulse,
+          Paint()..color = agents[i].color..style = PaintingStyle.fill);
 
-      // Label
+      // Label - Dynamic font size scaling
+      final fontSize = (r * 0.12).clamp(8.0, 12.0);
       final tp = TextPainter(
-        text: TextSpan(text: agents[i].id, style: TextStyle(color: agents[i].color, fontSize: 20, fontWeight: FontWeight.bold)),
+        text: TextSpan(
+            text: agents[i].id,
+            style: GoogleFonts.orbitron(
+                color: agents[i].color,
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5)),
         textDirection: TextDirection.ltr,
       )..layout();
       tp.paint(canvas, Offset(labelX - tp.width / 2, labelY - tp.height / 2));
