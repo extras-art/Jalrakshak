@@ -703,28 +703,49 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildAgentRadar(DashboardData data) {
     return Container(
-      height: 320,
+      height: 400, // Increased size
+      width: double.infinity, // Ensure it takes full width to allow centering
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [BoxShadow(color: const Color(0xFF0EA5E9).withValues(alpha: 0.06), blurRadius: 12)],
+        boxShadow: [
+          BoxShadow(
+              color: const Color(0xFF0EA5E9).withValues(alpha: 0.06),
+              blurRadius: 12)
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center, // Center the header
         children: [
-          Row(children: [
-            const Icon(Icons.radar, color: Color(0xFF0EA5E9), size: 14),
-            const SizedBox(width: 14),
-            Text('AGENT ACTIVITY RADAR', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF0EA5E9))),
-          ]),
-          const SizedBox(height: 18),
+          Row(
+              mainAxisAlignment: MainAxisAlignment.center, // Center the header icons/text
+              children: [
+                const Icon(Icons.radar, color: Color(0xFF0EA5E9), size: 14),
+                const SizedBox(width: 14),
+                Text('AGENT ACTIVITY RADAR',
+                    style: GoogleFonts.orbitron(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0EA5E9))),
+              ]),
+          const SizedBox(height: 24),
           Expanded(
-            child: AnimatedBuilder(
-              animation: _agentCtrl,
-              builder: (_, __) => CustomPaint(
-                painter: _AgentRadarPainter(agents: _agents, tick: _agentCtrl.value),
+            child: Center(
+              // Center the painter inside the expanded space
+              child: AnimatedBuilder(
+                animation: _agentCtrl,
+                builder: (_, __) => LayoutBuilder(builder: (context, constraints) {
+                  return SizedBox(
+                    width: constraints.maxWidth,
+                    height: constraints.maxHeight,
+                    child: CustomPaint(
+                      painter: _AgentRadarPainter(
+                          agents: _agents, tick: _agentCtrl.value),
+                    ),
+                  );
+                }),
               ),
             ),
           ),
