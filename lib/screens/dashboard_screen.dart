@@ -511,7 +511,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildKPITile((String, String, String, Color, String) kpi, int index) {
     final (emoji, label, val, color, agent) = kpi;
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: EdgeInsets.all(isMobile ? 12 : 22),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
@@ -523,19 +523,32 @@ class _DashboardScreenState extends State<DashboardScreen>
           : Row(
               children: [
                 Container(
-                  width: 60, height: 60,
+                  width: isMobile ? 42 : 60, height: isMobile ? 42 : 60,
                   decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-                  child: Center(child: Text(emoji, style: const TextStyle(fontSize: 18))),
+                  child: Center(child: Text(emoji, style: TextStyle(fontSize: isMobile ? 16 : 18))),
                 ),
-                const SizedBox(width: 14),
+                SizedBox(width: isMobile ? 10 : 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(val, style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
-                      Text(label, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: const Color(0xFF64748B))),
-                      Text(agent, style: GoogleFonts.orbitron(fontSize: 20, color: color)),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(val, style: GoogleFonts.poppins(fontSize: isMobile ? 18 : 22, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                      ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(label, style: GoogleFonts.poppins(fontSize: isMobile ? 12 : 15, fontWeight: FontWeight.w600, color: const Color(0xFF64748B))),
+                      ),
+                      const SizedBox(height: 2),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(agent, style: GoogleFonts.orbitron(fontSize: isMobile ? 9 : 12, fontWeight: FontWeight.w600, color: color)),
+                      ),
                     ],
                   ),
                 ),
@@ -543,6 +556,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
     ).animate(delay: (index * 60).ms).fadeIn().slideX(begin: 0.1);
   }
+
 
   // ─── MID ROW: ORACLE + RADAR + CHART ──────────────────────────────────────
   Widget _buildMidRow(DashboardData data, bool isMobile) {
