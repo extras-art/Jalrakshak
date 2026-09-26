@@ -651,11 +651,11 @@ class _ApiDataScreenState extends State<ApiDataScreen>
       crossAxisCount: 3,
       crossAxisSpacing: 8,
       mainAxisSpacing: 8,
-      childAspectRatio: 1.5,
+      childAspectRatio: 1.25,
       children: metrics.map((m) {
         final (emoji, label, value, color) = m;
         return Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(12),
@@ -667,8 +667,16 @@ class _ApiDataScreenState extends State<ApiDataScreen>
             children: [
               Text(emoji, style: const TextStyle(fontSize: 14)),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(value, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
-                Text(label, style: GoogleFonts.poppins(fontSize: 8, color: const Color(0xFF94A3B8))),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(value, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                ),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(label, style: GoogleFonts.poppins(fontSize: 8, color: const Color(0xFF94A3B8))),
+                ),
               ]),
             ],
           ),

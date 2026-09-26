@@ -1,13 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Network permissions for Firebase, Weather API, Ollama -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Camera & Photo permissions for VERITAS image capture -->
     <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <!-- Android 13+ image picker permission -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
     <!-- Location permissions for GPS coordinate fetch -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
-        android:label="planetshield360"
+        android:label="JalRakshak"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

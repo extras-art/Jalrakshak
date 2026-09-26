@@ -94,8 +94,8 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
   Widget _buildHeroSection() {
     return SliverToBoxAdapter(
       child: Container(
-        height: MediaQuery.of(context).size.height,
-        padding: const EdgeInsets.symmetric(horizontal: 40),
+        constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -155,7 +155,7 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
                         ),
                       ),
                       TextSpan(
-                        text: 'PLANETSHIELD360',
+                        text: 'JALRAKSHAK',
                         style: GoogleFonts.orbitron(
                           fontSize: _isMobile ? 28 : 56,
                           fontWeight: FontWeight.w900,
@@ -225,7 +225,7 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: _isMobile ? 1 : 2,
-                childAspectRatio: _isMobile ? 3.0 : 2.8,
+                childAspectRatio: _isMobile ? 2.4 : 2.8,
                 crossAxisSpacing: 20,
                 mainAxisSpacing: 20,
               ),
@@ -246,7 +246,7 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
 
   Widget _buildUSPCard(String title, String desc, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(_isMobile ? 16 : 24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -385,11 +385,17 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
             Flex(
               direction: _isMobile ? Axis.vertical : Axis.horizontal,
               children: [
-                Expanded(flex: _isMobile ? 0 : 1, child: _buildInfoCard('94%', 'ACCURACY', 'AI Sentinel prediction precision in Mumbai monsoon environments.')),
+                _isMobile
+                    ? _buildInfoCard('94%', 'ACCURACY', 'AI Sentinel prediction precision in Mumbai monsoon environments.')
+                    : Expanded(child: _buildInfoCard('94%', 'ACCURACY', 'AI Sentinel prediction precision in Mumbai monsoon environments.')),
                 SizedBox(width: _isMobile ? 0 : 20, height: _isMobile ? 20 : 0),
-                Expanded(flex: _isMobile ? 0 : 1, child: _buildInfoCard('±15m', 'GRANULARITY', 'Precision sensing across high-density risk zones.')),
+                _isMobile
+                    ? _buildInfoCard('±15m', 'GRANULARITY', 'Precision sensing across high-density risk zones.')
+                    : Expanded(child: _buildInfoCard('±15m', 'GRANULARITY', 'Precision sensing across high-density risk zones.')),
                 SizedBox(width: _isMobile ? 0 : 20, height: _isMobile ? 20 : 0),
-                Expanded(flex: _isMobile ? 0 : 1, child: _buildInfoCard('0.8s', 'LATENCY', 'Real-time consensus between 7 autonomous agents.')),
+                _isMobile
+                    ? _buildInfoCard('0.8s', 'LATENCY', 'Real-time consensus between 7 autonomous agents.')
+                    : Expanded(child: _buildInfoCard('0.8s', 'LATENCY', 'Real-time consensus between 7 autonomous agents.')),
               ],
             ),
           ],
@@ -437,7 +443,7 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
         padding: const EdgeInsets.symmetric(vertical: 100),
         child: Column(
           children: [
-            Text('PLANETSHIELD360', style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFFCBD5E1))),
+            Text('JALRAKSHAK', style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFFCBD5E1))),
             const SizedBox(height: 10),
             Text('Advanced Multi-Agent Disaster Defense Framework', style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF94A3B8))),
             const SizedBox(height: 100),
@@ -454,7 +460,7 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
       right: 0,
       child: Center(
         child: SizedBox(
-          width: 300,
+          width: 320,
           child: ElevatedButton(
             onPressed: () => Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const HomeScreen()),
@@ -462,17 +468,18 @@ class _IntroScreenState extends State<IntroScreen> with TickerProviderStateMixin
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0F172A),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 20),
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
               elevation: 20,
               shadowColor: const Color(0xFF0F172A).withValues(alpha: 0.4),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text('ENGAGE MISSION CONTROL', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                const SizedBox(width: 12),
-                const Icon(Icons.arrow_forward_rounded, size: 18),
+                Text('ENGAGE MISSION CONTROL', style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.2)),
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward_rounded, size: 16),
               ],
             ),
           ).animate(onPlay: (c) => c.repeat(reverse: true))

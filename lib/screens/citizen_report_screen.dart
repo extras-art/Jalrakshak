@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -97,7 +97,7 @@ class _CitizenReportScreenState extends State<CitizenReportScreen>
   final TextEditingController _descCtrl = TextEditingController();
 
   // Image & GPS
-  File? _capturedImage;
+  XFile? _capturedImage;
   double? _gpsLat;
   double? _gpsLng;
   bool _isFetchingGps = false;
@@ -163,7 +163,7 @@ class _CitizenReportScreenState extends State<CitizenReportScreen>
       final XFile? file = await _picker.pickImage(source: source, imageQuality: 85);
       if (file == null) return;
       setState(() {
-        _capturedImage = File(file.path);
+        _capturedImage = file;
         _phase = _Phase.idle; // trigger scan after setting image
       });
       await _runAiScan();
@@ -648,7 +648,18 @@ class _CitizenReportScreenState extends State<CitizenReportScreen>
       children: [
         // Show real image if captured, else placeholder
         if (_capturedImage != null)
-          Image.file(_capturedImage!, fit: BoxFit.cover)
+          FutureBuilder<List<int>>(
+            future: _capturedImage!.readAsBytes().then((b) => b.toList()),
+            builder: (context, snap) {
+              if (snap.hasData) {
+                return Image.memory(
+                  Uint8List.fromList(snap.data!),
+                  fit: BoxFit.cover,
+                );
+              }
+              return const ColoredBox(color: Color(0xFFF0FDF4));
+            },
+          )
         else
           const ColoredBox(color: Color(0xFFF0FDF4)),
         // Overlay

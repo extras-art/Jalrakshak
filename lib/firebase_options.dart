@@ -41,53 +41,53 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyB0DXwc-fgCksFLCYEKgSIQT6rPpgdzgAc',
-    appId: '1:243048062039:web:d7e686c4b5985faf501712',
-    messagingSenderId: '243048062039',
-    projectId: 'planetshield360',
-    authDomain: 'planetshield360.firebaseapp.com',
-    storageBucket: 'planetshield360.firebasestorage.app',
-    measurementId: 'G-KJSRPXGG3V',
-    databaseURL: 'https://planetshield360-default-rtdb.firebaseio.com',
+    apiKey: 'AIzaSyAMsGZA5ZivEXVp6UZMrcOWLeWoE8rNEPw',
+    appId: '1:366855150138:web:1a02cb25f696a41aa7b303',
+    messagingSenderId: '366855150138',
+    projectId: 'jalrakshak-fa0ed',
+    authDomain: 'jalrakshak-fa0ed.firebaseapp.com',
+    storageBucket: 'jalrakshak-fa0ed.firebasestorage.app',
+    measurementId: 'G-WF97WC3N9T',
+    databaseURL: 'https://jalrakshak-fa0ed-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC6epl2-ypB7DAUhNCFpX3aYpBNwRCbko4',
-    appId: '1:243048062039:android:caf052d92a609793501712',
-    messagingSenderId: '243048062039',
-    projectId: 'planetshield360',
-    storageBucket: 'planetshield360.firebasestorage.app',
-    databaseURL: 'https://planetshield360-default-rtdb.firebaseio.com',
+    apiKey: 'AIzaSyCAXkE71sM4pRV2bALq7z_RbL3-qH6sKwY',
+    appId: '1:366855150138:android:9f4901054b5a0b68a7b303',
+    messagingSenderId: '366855150138',
+    projectId: 'jalrakshak-fa0ed',
+    storageBucket: 'jalrakshak-fa0ed.firebasestorage.app',
+    databaseURL: 'https://jalrakshak-fa0ed-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyA-SD42zhS6-YCGsgjXEgg5c7xKskU86Vc',
-    appId: '1:243048062039:ios:3cd6cb7e725b065b501712',
-    messagingSenderId: '243048062039',
-    projectId: 'planetshield360',
-    storageBucket: 'planetshield360.firebasestorage.app',
-    iosBundleId: 'com.example.planetshield360',
-    databaseURL: 'https://planetshield360-default-rtdb.firebaseio.com',
+    apiKey: 'AIzaSyAMsGZA5ZivEXVp6UZMrcOWLeWoE8rNEPw',
+    appId: '1:366855150138:web:1a02cb25f696a41aa7b303',
+    messagingSenderId: '366855150138',
+    projectId: 'jalrakshak-fa0ed',
+    storageBucket: 'jalrakshak-fa0ed.firebasestorage.app',
+    iosBundleId: 'com.example.jalrakshak',
+    databaseURL: 'https://jalrakshak-fa0ed-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyA-SD42zhS6-YCGsgjXEgg5c7xKskU86Vc',
-    appId: '1:243048062039:ios:3cd6cb7e725b065b501712',
-    messagingSenderId: '243048062039',
-    projectId: 'planetshield360',
-    storageBucket: 'planetshield360.firebasestorage.app',
-    iosBundleId: 'com.example.planetshield360',
-    databaseURL: 'https://planetshield360-default-rtdb.firebaseio.com',
+    apiKey: 'AIzaSyAMsGZA5ZivEXVp6UZMrcOWLeWoE8rNEPw',
+    appId: '1:366855150138:web:1a02cb25f696a41aa7b303',
+    messagingSenderId: '366855150138',
+    projectId: 'jalrakshak-fa0ed',
+    storageBucket: 'jalrakshak-fa0ed.firebasestorage.app',
+    iosBundleId: 'com.example.jalrakshak',
+    databaseURL: 'https://jalrakshak-fa0ed-default-rtdb.firebaseio.com',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyB0DXwc-fgCksFLCYEKgSIQT6rPpgdzgAc',
-    appId: '1:243048062039:web:ab46c749ae269028501712',
-    messagingSenderId: '243048062039',
-    projectId: 'planetshield360',
-    authDomain: 'planetshield360.firebaseapp.com',
-    storageBucket: 'planetshield360.firebasestorage.app',
-    measurementId: 'G-CWKG1NV6EN',
-    databaseURL: 'https://planetshield360-default-rtdb.firebaseio.com',
+    apiKey: 'AIzaSyAMsGZA5ZivEXVp6UZMrcOWLeWoE8rNEPw',
+    appId: '1:366855150138:web:1a02cb25f696a41aa7b303',
+    messagingSenderId: '366855150138',
+    projectId: 'jalrakshak-fa0ed',
+    authDomain: 'jalrakshak-fa0ed.firebaseapp.com',
+    storageBucket: 'jalrakshak-fa0ed.firebasestorage.app',
+    measurementId: 'G-WF97WC3N9T',
+    databaseURL: 'https://jalrakshak-fa0ed-default-rtdb.firebaseio.com',
   );
 }

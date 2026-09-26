@@ -269,7 +269,7 @@ class _ReportScreenState extends State<ReportScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('PlanetShield Intelligence Brief', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                Text('JalRakshak Intelligence Brief', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
                 Text(_timestamp(), style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF94A3B8))),
               ],
             ),
@@ -518,7 +518,7 @@ class _ReportScreenState extends State<ReportScreen>
           crossAxisCount: 3,
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
-          childAspectRatio: 1.35,
+          childAspectRatio: 1.15,
           children: items.asMap().entries.map((e) => _envCell(e.value, e.key)).toList(),
         ),
       ],
@@ -528,7 +528,7 @@ class _ReportScreenState extends State<ReportScreen>
   Widget _envCell((String, String, String, Color) item, int idx) {
     final (emoji, label, value, color) = item;
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(9),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -539,10 +539,18 @@ class _ReportScreenState extends State<ReportScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 18)),
+          Text(emoji, style: const TextStyle(fontSize: 16)),
           Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(value, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
-            Text(label, style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF94A3B8))),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(value, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+            ),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(label, style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF94A3B8))),
+            ),
           ]),
         ],
       ),

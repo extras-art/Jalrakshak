@@ -243,14 +243,17 @@ class _DashboardScreenState extends State<DashboardScreen>
                     Text('STRATUM COMMAND', style: GoogleFonts.orbitron(fontSize: isMobile ? 11 : 15, fontWeight: FontWeight.bold, color: const Color(0xFF0EA5E9), letterSpacing: 1.5)),
                     Row(
                       children: [
-                        DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedLocation,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B), size: 16),
-                            style: GoogleFonts.poppins(fontSize: isMobile ? 18 : 22, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
-                            dropdownColor: Colors.white,
-                            items: locations.map((LocationNode node) => DropdownMenuItem<String>(value: node.name, child: Text(node.name))).toList(),
-                            onChanged: (val) { setState(() { _selectedLocation = val!; _isLoadingWeather = true; }); _startCloudStream(); },
+                        Expanded(
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedLocation,
+                              icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B), size: 16),
+                              style: GoogleFonts.poppins(fontSize: isMobile ? 16 : 20, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
+                              dropdownColor: Colors.white,
+                              items: locations.map((LocationNode node) => DropdownMenuItem<String>(value: node.name, child: Text(node.name, overflow: TextOverflow.ellipsis))).toList(),
+                              onChanged: (val) { setState(() { _selectedLocation = val!; _isLoadingWeather = true; }); _startCloudStream(); },
+                            ),
                           ),
                         ),
                       ],
@@ -365,7 +368,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
           const SizedBox(height: 20),
           SizedBox(
-            height: 140,
+            height: 150,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: _agents.length,
@@ -391,9 +394,9 @@ class _DashboardScreenState extends State<DashboardScreen>
       builder: (_, __) {
         final pulse = (sin(_agentCtrl.value * 2 * pi + index * 0.8) + 1) / 2;
         return Container(
-          width: 130,
+          width: 136,
           margin: const EdgeInsets.only(right: 10),
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: agent.color.withValues(alpha: 0.06 + 0.03 * pulse),
             borderRadius: BorderRadius.circular(16),
@@ -409,7 +412,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 children: [
                   Container(
                     padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(color: agent.color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(color: agent.color.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
                     child: Icon(agent.icon, color: agent.color, size: 14),
                   ),
                   Container(
@@ -423,11 +426,16 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(agent.name, style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: agent.color)),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(agent.name, style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: agent.color)),
+                  ),
                   const SizedBox(height: 2),
-                  Text(agent.role, style: GoogleFonts.poppins(fontSize: 17, color: const Color(0xFF64748B)), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 18),
+                  Text(agent.role, style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF64748B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 8),
                   // Activity bar
                   ClipRRect(
                     borderRadius: BorderRadius.circular(3),
@@ -435,7 +443,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       value: dynamicActivity * (0.85 + 0.15 * pulse),
                       backgroundColor: agent.color.withValues(alpha: 0.1),
                       valueColor: AlwaysStoppedAnimation(agent.color),
-                      minHeight: 6,
+                      minHeight: 4,
                     ),
                   ),
                 ],
@@ -502,7 +510,7 @@ class _DashboardScreenState extends State<DashboardScreen>
         crossAxisCount: isMobile ? 2 : 3,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: isMobile ? 1.4 : 2.0,
+        childAspectRatio: isMobile ? 1.25 : 2.0,
         children: kpis.asMap().entries.map((e) => _buildKPITile(e.value, e.key)).toList(),
       ),
     );
@@ -671,7 +679,13 @@ class _DashboardScreenState extends State<DashboardScreen>
           Row(children: [
             const Icon(Icons.biotech, color: Color(0xFF8B5CF6), size: 16),
             const SizedBox(width: 12),
-            Text('PROBE — RISK ANALYSIS ENGINE', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF8B5CF6))),
+            Expanded(
+              child: Text(
+                'PROBE — RISK ANALYSIS ENGINE',
+                style: GoogleFonts.orbitron(fontSize: isMobile ? 12 : 14, fontWeight: FontWeight.bold, color: const Color(0xFF8B5CF6)),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ]),
           const SizedBox(height: 18),
           Text(data.reasoning, style: GoogleFonts.poppins(fontSize: 15, color: const Color(0xFF475569), height: 1.5)),
@@ -704,7 +718,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('SCRIBE — MISSION DIRECTIVE', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: color)),
+                Text('SCRIBE — MISSION DIRECTIVE', style: GoogleFonts.orbitron(fontSize: isMobile ? 12 : 14, fontWeight: FontWeight.bold, color: color), overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 18),
                 Text(data.actionInstruction, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A), height: 1.4)),
               ],
@@ -734,15 +748,20 @@ class _DashboardScreenState extends State<DashboardScreen>
         crossAxisAlignment: CrossAxisAlignment.center, // Center the header
         children: [
           Row(
-              mainAxisAlignment: MainAxisAlignment.center, // Center the header icons/text
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.radar, color: Color(0xFF0EA5E9), size: 14),
-                const SizedBox(width: 14),
-                Text('AGENT ACTIVITY RADAR',
+                const SizedBox(width: 10),
+                Flexible(
+                  child: Text(
+                    'AGENT ACTIVITY RADAR',
                     style: GoogleFonts.orbitron(
-                        fontSize: 17,
+                        fontSize: isMobile ? 12 : 15,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF0EA5E9))),
+                        color: const Color(0xFF0EA5E9)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ]),
           const SizedBox(height: 24),
           Expanded(
@@ -783,8 +802,14 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           Row(children: [
             const Icon(Icons.analytics, color: Color(0xFF38BDF8), size: 14),
-            const SizedBox(width: 14),
-            Text('PRECIPITATION TREND', style: GoogleFonts.orbitron(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF38BDF8))),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'PRECIPITATION TREND',
+                style: GoogleFonts.orbitron(fontSize: isMobile ? 12 : 15, fontWeight: FontWeight.bold, color: const Color(0xFF38BDF8)),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ]),
           const SizedBox(height: 12),
           Expanded(
@@ -827,13 +852,19 @@ class _DashboardScreenState extends State<DashboardScreen>
         children: [
           Row(children: [
             const Icon(Icons.leaderboard, color: Color(0xFFEF4444), size: 16),
-            const SizedBox(width: 12),
-            Text('PRIORITY — TOP RISK ZONES', style: GoogleFonts.orbitron(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
-            const Spacer(),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'PRIORITY — TOP RISK ZONES',
+                style: GoogleFonts.orbitron(fontSize: isMobile ? 11 : 14, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444)),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(color: const Color(0xFFEF4444).withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
-              child: Text('LIVE RANKING', style: GoogleFonts.orbitron(fontSize: 20, color: const Color(0xFFEF4444))),
+              child: Text('LIVE RANKING', style: GoogleFonts.orbitron(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
             ),
           ]),
           const SizedBox(height: 18),
@@ -844,38 +875,37 @@ class _DashboardScreenState extends State<DashboardScreen>
               final p = e.value;
               final color = _riskColor(p.risk);
               final isMobile = MediaQuery.of(context).size.width < 600;
-              return Expanded(
-                flex: isMobile ? 0 : 1,
-                child: Container(
-                  width: double.infinity,
-                  margin: EdgeInsets.only(
-                    right: (!isMobile && e.key < 2) ? 10 : 0,
-                    bottom: (isMobile && e.key < 2) ? 10 : 0,
-                  ),
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: color.withValues(alpha: 0.25)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: [
-                        Container(
-                          width: 30, height: 30,
-                          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
-                          child: Center(child: Text('#$rank', style: GoogleFonts.orbitron(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white))),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(child: Text(p.location, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)), overflow: TextOverflow.ellipsis)),
-                      ]),
-                      const SizedBox(height: 12),
-                      Text(p.risk.name.toUpperCase(), style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w900, color: color)),
-                    ],
-                  ),
-                ).animate(delay: (rank * 80).ms).fadeIn().slideX(begin: 0.1),
-              );
+              final card = Container(
+                width: double.infinity,
+                margin: EdgeInsets.only(
+                  right: (!isMobile && e.key < 2) ? 10 : 0,
+                  bottom: (isMobile && e.key < 2) ? 10 : 0,
+                ),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: color.withValues(alpha: 0.25)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(children: [
+                      Container(
+                        width: 28, height: 28,
+                        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(8)),
+                        child: Center(child: Text('#$rank', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white))),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(child: Text(p.location, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)), overflow: TextOverflow.ellipsis)),
+                    ]),
+                    const SizedBox(height: 8),
+                    Text(p.risk.name.toUpperCase(), style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w900, color: color)),
+                  ],
+                ),
+              ).animate(delay: (rank * 80).ms).fadeIn().slideX(begin: 0.1);
+
+              return isMobile ? card : Expanded(child: card);
             }).toList(),
           ),
         ],
@@ -925,7 +955,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       child: Icon(icon, color: color, size: 22),
                     ),
                     const SizedBox(height: 12),
-                    Text(label, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF475569))),
+                    Text(label, style: GoogleFonts.poppins(fontSize: isMobile ? 11 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF475569))),
                   ],
                 ).animate(delay: (e.key * 60).ms).fadeIn().slideY(begin: 0.2),
               );

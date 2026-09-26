@@ -19,12 +19,12 @@ class PriorityService {
       // Re-use logic from our previous conversion helper
       final weather = WeatherData.fromJson({'hourly': {
         'time': [DateTime.now().toIso8601String()],
-        'temperature_2m': [val['temp'] ?? 0],
+        'temperature_2m': [val['temperature'] ?? 0],
         'relativehumidity_2m': [val['humidity'] ?? 0],
-        'soil_moisture_0_to_1cm': [val['soil'] ?? 0],
-        'precipitation': [val['rain'] ?? 0],
+        'soil_moisture_0_to_1cm': [val['soil_moisture'] ?? 0],
+        'precipitation': [val['precipitation'] ?? 0],
         'rain': [val['rain'] ?? 0],
-        'cloudcover': [val['cloud'] ?? 0],
+        'cloudcover': [val['cloud_cover'] ?? 0],
       }});
 
       final risk = ProbeService.calculateRisk(weather);

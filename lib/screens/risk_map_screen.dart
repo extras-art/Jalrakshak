@@ -122,7 +122,7 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
           _activeAlert = alert;
           _chatHistory.add(ChatResponse(
             text: '⚠️ ${alert.message}',
-            agentBranding: 'PlanetShield Assistant',
+            agentBranding: 'JalRakshak Assistant',
             location: alert.location,
           ));
           _updateIntelPanel(alert.location);
@@ -291,7 +291,7 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('PlanetShield360', style: GoogleFonts.orbitron(fontSize: _isMobile ? 12 : 11, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A), letterSpacing: 0.5)),
+                  Text('JalRakshak', style: GoogleFonts.orbitron(fontSize: _isMobile ? 12 : 11, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A), letterSpacing: 0.5)),
                   Text('AI Command Dashboard', style: GoogleFonts.poppins(fontSize: _isMobile ? 9 : 9, color: const Color(0xFF64748B))),
                 ],
               ),
@@ -565,7 +565,7 @@ class _RiskMapScreenState extends State<RiskMapScreen> with TickerProviderStateM
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.planetshield360',
+                userAgentPackageName: 'com.example.jalrakshak',
               ),
               MarkerLayer(
                 markers: locations.map((node) {

@@ -5,16 +5,25 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:planetshield360/screens/intro_screen.dart';
+import 'package:jalrakshak/screens/intro_screen.dart';
 
 void main() {
-  testWidgets('PlanetShieldApp smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const PlanetShieldApp());
+  testWidgets('JalRakshak smoke test', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(1080, 1920);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
-    // Verify that the app title is present.
-    expect(find.text('PlanetShield'), findsOneWidget);
-    expect(find.text('STRATUM MULTI-AGENT SYSTEM'), findsOneWidget);
+    await tester.pumpWidget(const MaterialApp(home: IntroScreen()));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(IntroScreen), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is RichText && w.text.toPlainText().contains('JALRAKSHAK'),
+      ),
+      findsWidgets,
+    );
   });
 }

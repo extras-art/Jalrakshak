@@ -452,7 +452,7 @@ class _SimulationScreenState extends State<SimulationScreen>
           ),
           Switch.adaptive(
             value: _floodAlert,
-            activeColor: const Color(0xFFEF4444),
+            activeTrackColor: const Color(0xFFEF4444),
             onChanged: (v) { setState(() => _floodAlert = v); _onChange(); },
           ),
         ],

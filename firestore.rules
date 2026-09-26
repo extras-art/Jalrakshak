@@ -1,0 +1,50 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow read/write to JalRakshak telemetry nodes
+    match /telemetry/{location} {
+      allow read: if true;
+      allow write: if true;
+
+      // Historical telemetry subcollection
+      match /history/{entryId} {
+        allow read: if true;
+        allow write: if true;
+      }
+    }
+
+    // Citizen and sensor disaster reports
+    match /reports/{reportId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if request.auth != null;
+    }
+
+    // VERITAS AI-validated multi-agent reports
+    match /veritas_reports/{reportId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if request.auth != null;
+    }
+
+    // Alerts & emergency notifications
+    match /alerts/{alertId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Global mission control & system integrity status
+    match /mission_status/{statusId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Tactical sensor and monitoring nodes metadata
+    match /nodes/{nodeId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

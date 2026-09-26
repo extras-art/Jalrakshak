@@ -1,6 +1,6 @@
-# planetshield360
+# JalRakshak
 
-A new Flutter project.
+Autonomous Water & Disaster Defense Framework.
 
 ## Getting Started
 
