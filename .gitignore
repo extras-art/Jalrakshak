@@ -46,3 +46,4 @@ app.*.map.json
 **/android/local.properties
 .gradle/
 
+JR
